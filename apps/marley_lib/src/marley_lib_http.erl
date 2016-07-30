@@ -10,7 +10,7 @@
 
 %% API
 -export([parse_request/1]).
--export_type([parsed_http_request/0, parsed_http_request_line/0, parsed_http_method/0, parsed_http_version/0, parsed_http_header/0]).
+-export_type([parsed_http_method/0, parsed_http_version/0]).
 %% Types
 
 -type parsed_http_request():: #{
@@ -99,8 +99,15 @@ parse_version([$H, $T, $T, $P, $/, $1, $., $0 | R0]) ->
 -spec parse_headers(list()) -> {[parsed_http_header()],list()}.
 parse_headers(Req)->
     {Headers,R1} = get_headers(Req,[]),
-    ParsedHeaders = [{lists:nth(X-1, Headers), lists:nth(X,Headers)} || X <- lists:seq(1,length(string:tokens(Headers, ":"))), X rem 2 =:=  0],
+    ParsedHeaders = parse_headers(string:tokens(Headers, "\r\n"), []),
     {ParsedHeaders, R1}.
+
+parse_headers([], SoFar)->
+    lists:reverse(SoFar);
+
+parse_headers([H|T], SoFar)->
+    [Prop|Val] = string:tokens(H, ":"),
+    parse_headers(T,[{Prop,Val}|SoFar]).
 
 %%%===================================================================
 %%% Helper functions
