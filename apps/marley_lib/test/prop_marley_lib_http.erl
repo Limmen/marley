@@ -57,11 +57,10 @@ validate(Result, {Method,URI,Version,Headers,Body})->
     ?assertMatch(Version, maps:get(http_version, maps:get(request_line, Result))),
     ?assertMatch(URI, maps:get(http_uri, maps:get(request_line, Result))),
     ?assert(length(string:tokens(lists:flatten(Headers), "\r\n")) =:= length(maps:get(headers, Result))),
+    ?assertMatch(Body, maps:get(body, Result)),
     true.
 
-%% ?assert(lists:all(fun({Property, Value}) -> 
-%%                           PropertiesAndValues = string:tokens(lists:flatten(string:tokens(Headers, "\r\n")),":"),
-%%                           lists:member(Property, PropertiesAndValues) andalso lists:member(Value, PropertiesAndValues) end, maps:get(headers, Result))),
+
 
 %%%===================================================================
 %%% Helper functions

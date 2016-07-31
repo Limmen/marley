@@ -24,23 +24,11 @@ $ rebar3 compile
 # remove temporary files
 $ rebar3 clean
 
-# run unit tests
-$ rebar3 eunit
+# run tests
+$ rebar3 alias testall
 
-# run system and integration tests
-$ rebar3 ct
-
-# run property tests
-$ rebar3 proper
-
-# run linter
-$ rebar3 lint
-
-# Runs cross reference analysis.
-$ rebar3 xref
-
-# Static code analysis
-$ rebar3 dialyzer
+# validate codebase, runs: tests, linters, static code analysis
+$ rebar3 alias validate
 
 # Generate documentation with edoc
 $ rebar3 edoc
