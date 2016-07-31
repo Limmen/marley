@@ -6,13 +6,13 @@
 %%% @end
 %%% Created : 30 Jul 2016 by kim <kim@limmen>
 %%%-------------------------------------------------------------------
--module(marley_lib_http).
+-module(marley_http).
 
 %% API
 -export([parse_request/1]).
 -export_type([parsed_http_method/0, parsed_http_version/0]).
-%% Types
 
+%% Types
 -type parsed_http_request():: #{
                            request_line => parsed_http_request_line(),
                            headers => [parsed_http_header()],
@@ -47,10 +47,9 @@
 
 %%--------------------------------------------------------------------
 %% @doc
-%% @spec
+%% Parses a HTTP request in text-form
 %% @end
 %%--------------------------------------------------------------------
-
 -spec parse_request(list()) -> parsed_http_request().
 parse_request(Req)->
     {RequestLine, R0} = parse_request_line(remove_leading_crlf(Req)),

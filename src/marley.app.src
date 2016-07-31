@@ -5,7 +5,8 @@
   {mod, { marley_app, []}},
   {applications,
    [kernel,
-    stdlib
+    stdlib,
+    marley_lib
    ]},
   {env,[]},
   {modules, []},

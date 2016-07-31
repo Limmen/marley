@@ -1,0 +1,14 @@
+** this is the overview.doc file for the application 'marley' **
+
+@author Kim Hammar <kimham@kth.se>
+@copyright 2016 Kim Hammar
+@version 0.0.1
+@title Marley Application
+
+@doc This is a http-server written in erlang.
+
+The project consists of the following modules:
+
+@todo list and briefly describe modules
+
+@end

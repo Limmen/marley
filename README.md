@@ -1,20 +1,8 @@
-marley
-=====
-
-An OTP application
-
-Build
------
-
-    $ rebar3 compile
-
 # marley
 
 ## Description
 
-OTP application
-
-Very basic webserver in erlang.
+Very basic http-server in erlang.
 
 ## Usage
 ```bash
