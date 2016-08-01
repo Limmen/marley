@@ -4,6 +4,8 @@
 
 Very basic http-server in erlang.
 
+[![Build Status](https://travis-ci.org/Limmen/marley.svg?branch=master)](https://travis-ci.org/Limmen/marley)
+
 ## Usage
 ```bash
 # build
