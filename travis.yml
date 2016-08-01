@@ -1,7 +1,10 @@
-language: node_js
+language: erlang
 
-node_js:
-  - 6.0
+notifications:
+  email: false
+  
+otp_release:
+  - 19.0
 
 before_install:
 - echo "overwritten before_install"
