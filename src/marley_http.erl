@@ -16,12 +16,12 @@
 -type parsed_http_request():: #{
                            request_line => parsed_http_request_line(),
                            headers => [parsed_http_header()],
-                           body => list()
+                           body => binary()
                           }.
 
 -type parsed_http_request_line():: #{
                                 http_method => parsed_http_method(),
-                                http_uri => list(),
+                                http_uri => binary(),
                                 http_version => parsed_http_version()
                                }.
 
@@ -39,7 +39,7 @@
 -type parsed_http_version():: 'HTTP/1.0'
                             | 'HTTP/1.1'.
 
--type parsed_http_header():: {list(), list()}.
+-type parsed_http_header():: {binary(), binary()}.
 
 %%%===================================================================
 %%% API
@@ -50,7 +50,7 @@
 %% Parses a HTTP request in text-form
 %% @end
 %%--------------------------------------------------------------------
--spec parse_request(list()) -> parsed_http_request().
+-spec parse_request(binary()) -> parsed_http_request().
 parse_request(Req)->
     {RequestLine, R0} = parse_request_line(remove_leading_crlf(Req)),
     {Headers, Body} = parse_headers(R0),
@@ -62,55 +62,78 @@ parse_request(Req)->
 %%%===================================================================
 
 %%--------------------------------------------------------------------
-%%
 %% Functions to parse a HTTP request
-%%
 %%--------------------------------------------------------------------
 
-%% Parses request line
--spec parse_request_line(list()) -> {parsed_http_request_line(), list()}.
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Parses HTTP Request Line
+%% @end
+%%--------------------------------------------------------------------
+-spec parse_request_line(binary()) -> {parsed_http_request_line(), binary()}.
 parse_request_line(Req) ->
     {Method, R0} = parse_method(Req),
     {URI, R1} = parse_uri(R0),
     {Version, R2} = parse_version(R1),
-    [13, 10|R3] = R2,
+    <<13, 10,R3/bits>> = R2,
     {#{http_method => Method, http_uri => URI, http_version => Version}, R3}.
 
-%% Parses URI
--spec parse_uri(list()) -> {list(), list()}.
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Parses HTTP URI
+%% @end
+%%--------------------------------------------------------------------
+-spec parse_uri(binary()) -> {binary(), binary()}.
 parse_uri(Req) ->
-    parse_uri(Req, []).
+    parse_uri(Req, <<>>).
 
--spec parse_uri(list(), list()) -> {list(), list()}.
-parse_uri([32|R1], URI)->
-    {lists:reverse(URI), R1};
-parse_uri([X|R1], SoFar)->
-    parse_uri(R1, [X|SoFar]).
+-spec parse_uri(binary(), binary()) -> {binary(), binary()}.
+parse_uri(<<32, R1/bits>>, URI)->
+    {URI, R1};
+parse_uri(<<X, R1/bits>>, SoFar)->
+    parse_uri(R1, <<SoFar/binary,X>>).
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
 %% Parses HTTP Method
--spec parse_method(list()) -> {parsed_http_method(), list()}.
+%% @end
+%%--------------------------------------------------------------------
+-spec parse_method(binary()) -> {parsed_http_method(), binary()}.
 parse_method(Req)->
-    parse_method(Req, []).
+    parse_method(Req, <<>>).
 
--spec parse_method(list(), list()) -> {parsed_http_method(), list()}.
-parse_method([32|R0], SoFar)->
-    {list_to_atom(string:to_lower(lists:reverse(SoFar))), R0};
+-spec parse_method(binary(), binary()) -> {parsed_http_method(), binary()}.
+parse_method(<<32, R0/bits>>, SoFar)->
+    {list_to_atom(string:to_lower(binary_to_list(SoFar))), R0};
 
-parse_method([X|R0], SoFar)->
-    parse_method(R0, [X|SoFar]).
+parse_method(<<X,R0/bits>>, SoFar)->
+    parse_method(R0, <<SoFar/binary, X>>).
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
 %% Parses HTTP Version
--spec parse_version(list()) -> {parsed_http_version(), list()}.
-parse_version([$H, $T, $T, $P, $/, $1, $., $1 | R0]) ->
+%% @end
+%%--------------------------------------------------------------------
+-spec parse_version(binary()) -> {parsed_http_version(), binary()}.
+parse_version(<<$H, $T, $T, $P, $/, $1, $., $1,R0/bits>>) ->
     {'HTTP/1.1', R0};
 
-parse_version([$H, $T, $T, $P, $/, $1, $., $0 | R0]) ->
+parse_version(<<$H, $T, $T, $P, $/, $1, $., $0, R0/bits>>) ->
     {'HTTP/1.0', R0}.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
 %% Parses HTTP Headers
--spec parse_headers(list()) -> {[parsed_http_header()], list()}.
+%% @end
+%%--------------------------------------------------------------------
+-spec parse_headers(binary()) -> {[parsed_http_header()], binary()}.
 parse_headers(Req)->
-    {Headers, R1} = get_headers(Req, []),
+    {Headers, R1} = get_headers(Req, <<>>),
     ParsedHeaders = parse_headers(string:tokens(Headers, "\r\n"), []),
     {ParsedHeaders, R1}.
 
@@ -131,18 +154,93 @@ parse_headers([H|T], SoFar)->
 %%% Helper functions
 %%%===================================================================
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
 %% Extracts the headers part
--spec get_headers(list(), list()) -> {list(), list()}.
-get_headers([$\r, $\n, $\r, $\n|R1], Headers)->
-    {lists:reverse(Headers), R1};
+%% @end
+%%--------------------------------------------------------------------
+-spec get_headers(binary(), binary()) -> {binary(), binary()}.
+get_headers(<<$\r, $\n, $\r, $\n, R1/bits>>, Headers)->
+    {binary_to_list(Headers), R1};
 
-get_headers([H|T], SoFar)->
-    get_headers(T, [H|SoFar]).
+get_headers(<<H,T/bits>>, SoFar)->
+    get_headers(T, <<SoFar/binary, H>>).
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
 %% Removes leading CRLF from request
-remove_leading_crlf([$\r, $\n|T])->
+%% @end
+%%--------------------------------------------------------------------
+remove_leading_crlf(<<$\r, $\n, T/bits>>)->
     remove_leading_crlf(T);
 remove_leading_crlf(Req) ->
     Req.
 
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% HTTP status codes.
+%% Response code string. Lifted from cowboy_http_req.erl
+%% @end
+%%--------------------------------------------------------------------
+status(100) -> <<"100 Continue">>;
+status(101) -> <<"101 Switching Protocols">>;
+status(102) -> <<"102 Processing">>;
+status(200) -> <<"200 OK">>;
+status(201) -> <<"201 Created">>;
+status(202) -> <<"202 Accepted">>;
+status(203) -> <<"203 Non-Authoritative Information">>;
+status(204) -> <<"204 No Content">>;
+status(205) -> <<"205 Reset Content">>;
+status(206) -> <<"206 Partial Content">>;
+status(207) -> <<"207 Multi-Status">>;
+status(226) -> <<"226 IM Used">>;
+status(300) -> <<"300 Multiple Choices">>;
+status(301) -> <<"301 Moved Permanently">>;
+status(302) -> <<"302 Found">>;
+status(303) -> <<"303 See Other">>;
+status(304) -> <<"304 Not Modified">>;
+status(305) -> <<"305 Use Proxy">>;
+status(306) -> <<"306 Switch Proxy">>;
+status(307) -> <<"307 Temporary Redirect">>;
+status(400) -> <<"400 Bad Request">>;
+status(401) -> <<"401 Unauthorized">>;
+status(402) -> <<"402 Payment Required">>;
+status(403) -> <<"403 Forbidden">>;
+status(404) -> <<"404 Not Found">>;
+status(405) -> <<"405 Method Not Allowed">>;
+status(406) -> <<"406 Not Acceptable">>;
+status(407) -> <<"407 Proxy Authentication Required">>;
+status(408) -> <<"408 Request Timeout">>;
+status(409) -> <<"409 Conflict">>;
+status(410) -> <<"410 Gone">>;
+status(411) -> <<"411 Length Required">>;
+status(412) -> <<"412 Precondition Failed">>;
+status(413) -> <<"413 Request Entity Too Large">>;
+status(414) -> <<"414 Request-URI Too Long">>;
+status(415) -> <<"415 Unsupported Media Type">>;
+status(416) -> <<"416 Requested Range Not Satisfiable">>;
+status(417) -> <<"417 Expectation Failed">>;
+status(418) -> <<"418 I'm a teapot">>;
+status(422) -> <<"422 Unprocessable Entity">>;
+status(423) -> <<"423 Locked">>;
+status(424) -> <<"424 Failed Dependency">>;
+status(425) -> <<"425 Unordered Collection">>;
+status(426) -> <<"426 Upgrade Required">>;
+status(428) -> <<"428 Precondition Required">>;
+status(429) -> <<"429 Too Many Requests">>;
+status(431) -> <<"431 Request Header Fields Too Large">>;
+status(500) -> <<"500 Internal Server Error">>;
+status(501) -> <<"501 Not Implemented">>;
+status(502) -> <<"502 Bad Gateway">>;
+status(503) -> <<"503 Service Unavailable">>;
+status(504) -> <<"504 Gateway Timeout">>;
+status(505) -> <<"505 HTTP Version Not Supported">>;
+status(506) -> <<"506 Variant Also Negotiates">>;
+status(507) -> <<"507 Insufficient Storage">>;
+status(510) -> <<"510 Not Extended">>;
+status(511) -> <<"511 Network Authentication Required">>;
+status(B) when is_binary(B) -> B.

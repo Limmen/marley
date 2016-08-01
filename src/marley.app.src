@@ -1,12 +1,10 @@
 {application, marley,
- [{description, "An OTP application"},
-  {vsn, "0.1.0"},
+ [{description, "A basic web server"},
+  {vsn, "0.0.1"},
   {registered, []},
-  {mod, { marley_app, []}},
   {applications,
    [kernel,
-    stdlib,
-    marley_lib
+    stdlib
    ]},
   {env,[]},
   {modules, []},
