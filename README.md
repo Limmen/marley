@@ -7,28 +7,28 @@ Very basic http-server in erlang.
 ## Usage
 ```bash
 # build
-$ rebar3 compile
+$ ./rebar3 compile
 
 # remove temporary files
-$ rebar3 clean
+$ ./rebar3 clean
 
 # run tests
-$ rebar3 alias testall
+$ ./rebar3 alias testall
 
 # validate codebase, runs: tests, linters, static code analysis
-$ rebar3 alias validate
+$ ./rebar3 alias validate
 
 # Generate documentation with edoc
-$ rebar3 edoc
+$ ./rebar3 edoc
 
 # Start shell with application loaded
-$ rebar3 shell
+$ ./rebar3 shell
 
 # Start shell with application loaded and listen for code changes
-$ rebar3 auto
+$ ./rebar3 auto
 
 # Run release
-$ rebar3 run
+$ ./rebar3 run
 
 ```
 

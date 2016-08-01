@@ -9,7 +9,7 @@
 -module(marley_http).
 
 %% API
--export([parse_request/1]).
+-export([parse_request/1, status/1]).
 -export_type([parsed_http_method/0, parsed_http_version/0]).
 
 %% Types
@@ -76,7 +76,7 @@ parse_request_line(Req) ->
     {Method, R0} = parse_method(Req),
     {URI, R1} = parse_uri(R0),
     {Version, R2} = parse_version(R1),
-    <<13, 10,R3/bits>> = R2,
+    <<13, 10, R3/bits>> = R2,
     {#{http_method => Method, http_uri => URI, http_version => Version}, R3}.
 
 %%--------------------------------------------------------------------
@@ -93,7 +93,7 @@ parse_uri(Req) ->
 parse_uri(<<32, R1/bits>>, URI)->
     {URI, R1};
 parse_uri(<<X, R1/bits>>, SoFar)->
-    parse_uri(R1, <<SoFar/binary,X>>).
+    parse_uri(R1, <<SoFar/binary, X>>).
 
 %%--------------------------------------------------------------------
 %% @private
@@ -109,7 +109,7 @@ parse_method(Req)->
 parse_method(<<32, R0/bits>>, SoFar)->
     {list_to_atom(string:to_lower(binary_to_list(SoFar))), R0};
 
-parse_method(<<X,R0/bits>>, SoFar)->
+parse_method(<<X, R0/bits>>, SoFar)->
     parse_method(R0, <<SoFar/binary, X>>).
 
 %%--------------------------------------------------------------------
@@ -119,7 +119,7 @@ parse_method(<<X,R0/bits>>, SoFar)->
 %% @end
 %%--------------------------------------------------------------------
 -spec parse_version(binary()) -> {parsed_http_version(), binary()}.
-parse_version(<<$H, $T, $T, $P, $/, $1, $., $1,R0/bits>>) ->
+parse_version(<<$H, $T, $T, $P, $/, $1, $., $1, R0/bits>>) ->
     {'HTTP/1.1', R0};
 
 parse_version(<<$H, $T, $T, $P, $/, $1, $., $0, R0/bits>>) ->
@@ -160,11 +160,11 @@ parse_headers([H|T], SoFar)->
 %% Extracts the headers part
 %% @end
 %%--------------------------------------------------------------------
--spec get_headers(binary(), binary()) -> {binary(), binary()}.
+-spec get_headers(binary(), binary()) -> {list(), binary()}.
 get_headers(<<$\r, $\n, $\r, $\n, R1/bits>>, Headers)->
     {binary_to_list(Headers), R1};
 
-get_headers(<<H,T/bits>>, SoFar)->
+get_headers(<<H, T/bits>>, SoFar)->
     get_headers(T, <<SoFar/binary, H>>).
 
 %%--------------------------------------------------------------------
