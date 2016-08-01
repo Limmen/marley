@@ -19,7 +19,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-record(state, {socket, acceptors, open_connections, max_connections, routes}).
 
 %%%===================================================================
 %%% API
@@ -29,11 +29,11 @@
 %% @doc
 %% Starts the server with given configurations
 %%
-%% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
+%% @spec start_link(Opts) -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link(_Opts) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+start_link(Opts) ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, Opts, []).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -52,8 +52,25 @@ start_link(_Opts) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([_Opts]) ->
-    {ok, #state{}}.
+init([Port, AcceptorPoolSize, MaxConnections, Routes]) ->
+    %% Use the exit signal from the acceptor processes to know when
+    %% they exit
+    process_flag(trap_exit, true),
+    Socket = gen_tcp:listen(Port, [binary, {active, false}, {reuseaddr, true}]),
+    Acceptors = ets:new(acceptors, [private, set]),
+    StartAcceptor  = fun() ->
+                             Pid = marley_acceptor:start_link(Socket, Routes),
+                             ets:insert(Acceptors, {Pid})
+                     end,
+    [ StartAcceptor() || _ <- lists:seq(1, AcceptorPoolSize)],
+
+    {ok, #state{socket = Socket,
+                acceptors = Acceptors,
+                open_connections = 0,
+                max_connections = MaxConnections,
+                routes = Routes
+               }
+    }.
 
 %%--------------------------------------------------------------------
 %% @private

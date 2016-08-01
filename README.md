@@ -36,6 +36,6 @@ $ ./rebar3 run
 
 ## Copyright and license
 
-The MIT License (MIT)
+see: [LICENSE](./LICENSE)
 
 Copyright (c) 2016 Kim Hammar

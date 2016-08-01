@@ -2,44 +2,36 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Module marley_http</title>
+<title>Module marley_server</title>
 <link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
 </head>
 <body bgcolor="white">
 <div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
 <hr>
 
-<h1>Module marley_http</h1>
-<ul class="index"><li><a href="#description">Description</a></li><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
-   Suite of functions for parsing HTTP requests and responses.
+<h1>Module marley_server</h1>
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+   Basic HTTP server.
 <p>Copyright © (C) 2016, kim</p>
 
+<p><b>Behaviours:</b> <a href="gen_server.html"><tt>gen_server</tt></a>.</p>
 <p><b>Authors:</b> kim (<a href="mailto:kim@limmen"><tt>kim@limmen</tt></a>).</p>
 
 <h2><a name="description">Description</a></h2>
-   Suite of functions for parsing HTTP requests and responses
-<h2><a name="types">Data Types</a></h2>
-
-<h3 class="typedecl"><a name="type-parsed_http_method">parsed_http_method()</a></h3>
-<p><tt>parsed_http_method() = get | post | head | put | delete | trace | options | connect | patch</tt></p>
-
-
-<h3 class="typedecl"><a name="type-parsed_http_version">parsed_http_version()</a></h3>
-<p><tt>parsed_http_version() = 'HTTP/1.0' | 'HTTP/1.1'</tt></p>
-
-
+   Basic HTTP server
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#parse_request-1">parse_request/1</a></td><td>
-  Parses a HTTP request in text-form into a parsed_http_request().</td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#start_link-1">start_link/1</a></td><td>
+  Starts the server with given configurations.</td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
 
-<h3 class="function"><a name="parse_request-1">parse_request/1</a></h3>
+<h3 class="function"><a name="start_link-1">start_link/1</a></h3>
 <div class="spec">
-<p><tt>parse_request(Req) -&gt; ParsedRequest</tt><br></p>
+<p><tt>start_link(Opts) -&gt; {ok, Pid} | ignore | {error, Error}</tt><br></p>
 </div><p>
-  Parses a HTTP request in text-form into a parsed_http_request()</p>
+  Starts the server with given configurations
+ </p>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>

@@ -47,7 +47,8 @@
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Parses a HTTP request in text-form
+%% Parses a HTTP request in text-form into a parsed_http_request()
+%% @spec parse_request(Req) -> ParsedRequest
 %% @end
 %%--------------------------------------------------------------------
 -spec parse_request(binary()) -> parsed_http_request().
@@ -68,7 +69,8 @@ parse_request(Req)->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% Parses HTTP Request Line
+%% Parses the HTTP Request Line
+%% @spec parse_request_line(Req) -> {ParsedRequestLine, RestOfRequest}
 %% @end
 %%--------------------------------------------------------------------
 -spec parse_request_line(binary()) -> {parsed_http_request_line(), binary()}.
@@ -83,6 +85,7 @@ parse_request_line(Req) ->
 %% @private
 %% @doc
 %% Parses HTTP URI
+%% @spec parse_uri(Req) -> {ParsedURI, RestOfRequest}
 %% @end
 %%--------------------------------------------------------------------
 -spec parse_uri(binary()) -> {binary(), binary()}.
@@ -99,6 +102,7 @@ parse_uri(<<X, R1/bits>>, SoFar)->
 %% @private
 %% @doc
 %% Parses HTTP Method
+%% @spec parse_method(Req) -> {ParsedMethod, RestOfRequest}
 %% @end
 %%--------------------------------------------------------------------
 -spec parse_method(binary()) -> {parsed_http_method(), binary()}.
@@ -116,6 +120,7 @@ parse_method(<<X, R0/bits>>, SoFar)->
 %% @private
 %% @doc
 %% Parses HTTP Version
+%% @spec parse_version(Req) -> {ParsedVersion, RestOfRequest}
 %% @end
 %%--------------------------------------------------------------------
 -spec parse_version(binary()) -> {parsed_http_version(), binary()}.
@@ -129,6 +134,7 @@ parse_version(<<$H, $T, $T, $P, $/, $1, $., $0, R0/bits>>) ->
 %% @private
 %% @doc
 %% Parses HTTP Headers
+%% @spec parse_headers(Req) -> {Parsedheaders, RestOfRequest}
 %% @end
 %%--------------------------------------------------------------------
 -spec parse_headers(binary()) -> {[parsed_http_header()], binary()}.
@@ -157,7 +163,8 @@ parse_headers([H|T], SoFar)->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% Extracts the headers part
+%% Extracts the headers part from the request
+%% @spec get_headers(Req, SoFar) -> {Headers, RestOfRequest}
 %% @end
 %%--------------------------------------------------------------------
 -spec get_headers(binary(), binary()) -> {list(), binary()}.
@@ -171,6 +178,7 @@ get_headers(<<H, T/bits>>, SoFar)->
 %% @private
 %% @doc
 %% Removes leading CRLF from request
+%% @spec remove_leading_crlf(Req) -> ReqWithoutLeadingCRLF
 %% @end
 %%--------------------------------------------------------------------
 remove_leading_crlf(<<$\r, $\n, T/bits>>)->
@@ -184,6 +192,7 @@ remove_leading_crlf(Req) ->
 %% @doc
 %% HTTP status codes.
 %% Response code string. Lifted from cowboy_http_req.erl
+%% @spec status(Code) -> StatusString
 %% @end
 %%--------------------------------------------------------------------
 status(100) -> <<"100 Continue">>;
