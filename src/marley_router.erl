@@ -11,21 +11,21 @@
 
 %% API
 -export([get_route/2, validate_routes/1]).
--export_type([marley_routes/0]).
+-export_type([marley_routes/0, marley_route_handler/0, marley_route/0]).
 
 %% Types
 
 -type marley_routes():: #{routes => list(marley_route()),
-                          static => list(),
-                          notfound => marley_route()
+                          static => list(char()),
+                          notfound => marley_route_handler()
                          }.
 
 -type marley_route():: #{http_method => marley_http:parsed_http_method(),
-                         path => list(),
-                         handler => marley_route_handle()}.
+                         path => list(char()),
+                         handler => marley_route_handler()}.
 
--type marley_route_handle():: {handler, integer(), atom()}
-                            | {response, integer(), binary()}.
+-type marley_route_handler():: {handler, integer(), atom()}
+                             | {response, integer(), binary()}.
 %%%===================================================================
 %%% API
 %%%===================================================================
@@ -50,9 +50,9 @@ get_route(Request, Routes)->
     end.
 
 validate_routes(#{routes := Routes, static := Static, notfound := NotFound})
-  when is_list(Routes) andalso is_list(Static) andalso is_map(NotFound) ->
+  when is_list(Routes) andalso is_list(Static) andalso is_tuple(NotFound) ->
     lists:all(fun(Route) -> validate_route(Route) end, Routes) 
-        andalso validate_route(NotFound).
+        andalso validate_handler(NotFound).
     
 %%%===================================================================
 %%% Internal functions
