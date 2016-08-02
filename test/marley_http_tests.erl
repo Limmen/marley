@@ -1,10 +1,10 @@
 %%%-------------------------------------------------------------------
-%%% @author kim <kim@limmen>
-%%% @copyright (C) 2016, kim
+%%% @author Kim Hammar <kimham@kth.se>
+%%% @copyright (C) 2016, Kim Hammar
 %%% @doc
 %%% Unit test suite for marley_http.erl
 %%% @end
-%%% Created : 30 Jul 2016 by kim <kim@limmen>
+%%% Created : 30 Jul 2016 by Kim Hammar <kimham@kth.se>
 %%%-------------------------------------------------------------------
 -module(marley_http_tests).
 

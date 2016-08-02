@@ -114,7 +114,8 @@ parse_request(Data)->
 %%--------------------------------------------------------------------
 handle_response(Client, Request, Routes)->
     Version = maps:get(http_version, maps:get(request_line, Request)),
-    Response = construct_response(Version, marley_router:get_route(Request, Routes)),
+    Response =
+        construct_response(Version, marley_router:route(Request, Routes)),
     send_response(Client, Response).
 
 %%--------------------------------------------------------------------

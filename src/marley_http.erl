@@ -67,9 +67,9 @@ http_response(Version, Code, Body)->
     http_response(Version, Code, default_headers(Body), Body).
 
 http_response(Version, Code, Headers, Body)->
-    BinVer = atom_to_binary(Version,unicode),
+    BinVer = atom_to_binary(Version, unicode),
     Status = status(Code),
-    <<BinVer/bits,32,Status/bits,
+    <<BinVer/bits, 32, Status/bits,
       "\r\n", Headers/bits, Body/bits>>.
 
 
