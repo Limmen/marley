@@ -1,10 +1,10 @@
 %%%-------------------------------------------------------------------
-%%% @author kim <kim@limmen>
-%%% @copyright (C) 2016, kim
+%%% @author Kim Hammar <kimham@kth.se>
+%%% @copyright (C) 2016, Kim Hammar
 %%% @doc
 %%% Basic HTTP server
 %%% @end
-%%% Created :  1 Aug 2016 by kim <kim@limmen>
+%%% Created :  1 Aug 2016 by Kim Hammar <kimham@kth.se>
 %%%-------------------------------------------------------------------
 -module(marley_server).
 
@@ -59,18 +59,16 @@ init([Port, AcceptorPoolSize, MaxConnections, Routes]) ->
     Socket = gen_tcp:listen(Port, [binary, {active, false}, {reuseaddr, true}]),
     Acceptors = ets:new(acceptors, [private, set]),
     StartAcceptor  = fun() ->
-                             Pid = marley_acceptor:start_link(Socket, Routes),
+                             Pid = marley_acceptor:start_link(Socket, Routes,
+                                                              self()),
                              ets:insert(Acceptors, {Pid})
                      end,
     [ StartAcceptor() || _ <- lists:seq(1, AcceptorPoolSize)],
-
     {ok, #state{socket = Socket,
                 acceptors = Acceptors,
                 open_connections = 0,
                 max_connections = MaxConnections,
-                routes = Routes
-               }
-    }.
+                routes = Routes}}.
 
 %%--------------------------------------------------------------------
 %% @private

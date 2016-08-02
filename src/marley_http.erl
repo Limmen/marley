@@ -1,15 +1,15 @@
 %%%-------------------------------------------------------------------
-%%% @author kim <kim@limmen>
-%%% @copyright (C) 2016, kim
+%%% @author Kim Hammar <kimham@kth.se>
+%%% @copyright (C) 2016, Kim Hammar
 %%% @doc
 %%% Suite of functions for parsing HTTP requests and responses
 %%% @end
-%%% Created : 30 Jul 2016 by kim <kim@limmen>
+%%% Created : 30 Jul 2016 by Kim Hammar <kimham@kth.se>
 %%%-------------------------------------------------------------------
 -module(marley_http).
 
 %% API
--export([parse_request/1, status/1]).
+-export([parse_request/1, http_response/3, http_response/4, status/1]).
 -export_type([parsed_http_method/0, parsed_http_version/0]).
 
 %% Types
@@ -56,6 +56,22 @@ parse_request(Req)->
     {RequestLine, R0} = parse_request_line(remove_leading_crlf(Req)),
     {Headers, Body} = parse_headers(R0),
     #{request_line => RequestLine, headers => Headers, body => Body}.
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Parses a HTTP request in text-form into a parsed_http_request()
+%% @spec parse_request(Req) -> ParsedRequest
+%% @end
+%%--------------------------------------------------------------------
+http_response(Version, Code, Body)->
+    http_response(Version, Code, default_headers(Body), Body).
+
+http_response(Version, Code, Headers, Body)->
+    BinVer = atom_to_binary(Version,unicode),
+    Status = status(Code),
+    <<BinVer/bits,32,Status/bits,
+      "\r\n", Headers/bits, Body/bits>>.
+
 
 
 %%%===================================================================
@@ -156,6 +172,9 @@ parse_headers([H|T], SoFar)->
 %%
 %%--------------------------------------------------------------------
 
+
+
+
 %%%===================================================================
 %%% Helper functions
 %%%===================================================================
@@ -252,4 +271,12 @@ status(506) -> <<"506 Variant Also Negotiates">>;
 status(507) -> <<"507 Insufficient Storage">>;
 status(510) -> <<"510 Not Extended">>;
 status(511) -> <<"511 Network Authentication Required">>;
-status(B) when is_binary(B) -> B.
+status(B) -> B.
+
+default_headers(Body) when is_binary(Body)->
+    Size = integer_to_binary(byte_size(Body)),
+    <<"Connection: Keep-Alive\r\n","Content-Length:",Size/bits,"\r\n\r\n">>;
+
+default_headers(Body) when is_list(Body)->
+    Size = integer_to_binary(length(Body)),
+    <<"Connection: Keep-Alive\r\n","Content-Length:",Size/bits,"\r\n\r\n">>.

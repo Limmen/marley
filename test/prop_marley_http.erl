@@ -1,10 +1,10 @@
 %%%-------------------------------------------------------------------
-%%% @author kim <kim@limmen>
-%%% @copyright (C) 2016, kim
+%%% @author Kim Hammar <kimham@kth.se>
+%%% @copyright (C) 2016, Kim Hammar
 %%% @doc
 %%% Property tests for marley_http
 %%% @end
-%%% Created : 30 Jul 2016 by kim <kim@limmen>
+%%% Created : 30 Jul 2016 by Kim Hammar <kimham@kth.se>
 %%%-------------------------------------------------------------------
 -module(prop_marley_http).
 
@@ -20,7 +20,10 @@
 %%%===================================================================
 
 prop_parse_request()->
-    ?FORALL({Method,URI,Version,Headers,Body}, {marley_http:parsed_http_method(), plain_string_not_empty(), marley_http:parsed_http_version(), list(header()), list(char())}, validate(marley_http:parse_request((format_request_string(Method, URI, Version, Headers, Body))), {Method,URI,Version,Headers,Body})).
+    ?FORALL({Method,URI,Version,Headers,Body}, {marley_http:parsed_http_method(), plain_string_not_empty(), marley_http:parsed_http_version(), list(header()), list(char())}, validate_parsed_request(marley_http:parse_request((format_request_string(Method, URI, Version, Headers, Body))), {Method,URI,Version,Headers,Body})).
+
+prop_http_response()->
+    ?FORALL({Version, Code, Body}, {marley_http:parsed_http_version(), http_code(), binary()}, validate_http_response(marley_http:http_response(Version, Code, Body))).
 
 %%%===================================================================
 %%% Generators
@@ -35,11 +38,18 @@ plain_string()->
 plain_string_not_empty()->
     ?SUCHTHAT(X, list(char()), lists:all(fun(C) -> C /= 32 andalso C /= 13 andalso C /= 10 andalso C /= 58 end, X) andalso length(X) > 0).
 
+http_code()->
+    Codes = [100,101,102,200,201,202,203,204,205,206,207,226,300,301,302,
+             303,304,305,306,307,400,401,402,403,404,405,406,407,408,409,
+             410,411,412,413,414,415,416,417,418,422,423,424,425,426,428,
+             429,431,500,501,502,503,504,505,506,507,510,511],
+    ?SUCHTHAT(X, integer(99,512), lists:member(X,Codes)).
+
 %%%===================================================================
 %%% Properties
 %%%===================================================================
 
-validate(Result, {Method,URI,Version,Headers,Body})->
+validate_parsed_request(Result, {Method,URI,Version,Headers,Body})->
     BinURI = unicode:characters_to_binary(URI),
     BinBody = unicode:characters_to_binary(Body),
     ?assert(is_map(Result)),
@@ -56,6 +66,10 @@ validate(Result, {Method,URI,Version,Headers,Body})->
     ?assertMatch(BinURI, maps:get(http_uri, maps:get(request_line, Result))),
     ?assert(length(string:tokens(lists:flatten(Headers), "\r\n")) =:= length(maps:get(headers, Result))),
     ?assertMatch(BinBody, maps:get(body, Result)),
+    true.
+
+validate_http_response(Result) ->
+    ?assert(is_binary(Result)),
     true.
 
 %%%===================================================================

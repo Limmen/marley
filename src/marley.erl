@@ -1,11 +1,11 @@
 %%%-------------------------------------------------------------------
-%%% @author kim <kim@limmen>
-%%% @copyright (C) 2016, kim
+%%% @author Kim Hammar <kimham@kth.se>
+%%% @copyright (C) 2016, Kim Hammar
 %%% @doc
 %%% This module contains the API that is the entry-point for the
 %%% Marley web-server.
 %%% @end
-%%% Created : 31 Jul 2016 by kim <kim@limmen>
+%%% Created : 31 Jul 2016 by Kim Hammar <kimham@kth.se>
 %%%-------------------------------------------------------------------
 -module(marley).
 
