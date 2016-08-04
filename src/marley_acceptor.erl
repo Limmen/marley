@@ -43,8 +43,8 @@ accept(Socket, Routes, Server)->
         {ok, Client} ->
             gen_server:cast(Server, client_connected),
             keepalive_loop(Client, Routes);
-        {error, Error}->
-            ok %% Todo log error
+        {error, _Reason}-> %% Expected error
+            ok
     end.
 
 
@@ -75,8 +75,8 @@ handle_request(Client, Routes)->
             Request = parse_request(Data),
             handle_response(Client, Request, Routes),
             keepalive_or_close(Request);
-        {error, Error} ->
-            gen_tcp:close(Client), %% log Error
+        {error, _Error} -> %% Expected error
+            gen_tcp:close(Client),
             close
     end.
 
@@ -124,18 +124,9 @@ handle_response(Client, Request, Routes)->
 %% Constructs a http response given a request and other options.
 %% @end
 %%--------------------------------------------------------------------
-construct_response(Version, {handler, Code, Callback})->
-    ok;
 
-construct_response(Version, {reponse, Code, Response})->
-    marley_http:http_response(Version, Code, Response),
-    ok;
-
-construct_response(Version, {static, Code, File})->
-    ok;
-
-construct_response(Version, no_response)->
-    ok.
+construct_response(Version, {Code, Body, Headers})->
+    marley_http:http_response(Version, Code, Body, Headers).
 
 %%--------------------------------------------------------------------
 %% @private

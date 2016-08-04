@@ -23,7 +23,7 @@ prop_parse_request()->
     ?FORALL({Method,URI,Version,Headers,Body}, {marley_http:parsed_http_method(), plain_string_not_empty(), marley_http:parsed_http_version(), list(header()), list(char())}, validate_parsed_request(marley_http:parse_request((format_request_string(Method, URI, Version, Headers, Body))), {Method,URI,Version,Headers,Body})).
 
 prop_http_response()->
-    ?FORALL({Version, Code, Body}, {marley_http:parsed_http_version(), http_code(), binary()}, validate_http_response(marley_http:http_response(Version, Code, Body))).
+    ?FORALL({Version, Code, Body,Headers}, {marley_http:parsed_http_version(), http_code(), binary(), binary()}, validate_http_response(marley_http:http_response(Version, Code, Body, Headers))).
 
 %%%===================================================================
 %%% Generators

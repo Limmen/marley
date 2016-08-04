@@ -9,7 +9,7 @@
 -module(marley_http).
 
 %% API
--export([parse_request/1, http_response/3, http_response/4, status/1]).
+-export([parse_request/1, http_response/4, status/1]).
 -export_type([parsed_http_method/0, parsed_http_version/0]).
 
 %% Types
@@ -63,12 +63,10 @@ parse_request(Req)->
 %% @spec parse_request(Req) -> ParsedRequest
 %% @end
 %%--------------------------------------------------------------------
-http_response(Version, Code, Body)->
-    http_response(Version, Code, default_headers(Body), Body).
-
-http_response(Version, Code, Headers, Body)->
+http_response(Version, Code, Body, UserHeaders)->
     BinVer = atom_to_binary(Version, unicode),
     Status = status(Code),
+    Headers = default_headers(Body, UserHeaders),
     <<BinVer/bits, 32, Status/bits,
       "\r\n", Headers/bits, Body/bits>>.
 
@@ -273,10 +271,12 @@ status(510) -> <<"510 Not Extended">>;
 status(511) -> <<"511 Network Authentication Required">>;
 status(B) -> B.
 
-default_headers(Body) when is_binary(Body)->
+default_headers(Body, Headers) when is_binary(Body)->
     Size = integer_to_binary(byte_size(Body)),
-    <<"Connection: Keep-Alive\r\n","Content-Length:",Size/bits,"\r\n\r\n">>;
+    <<"Connection: Keep-Alive\r\n", "Content-Length:",
+      Size/bits, "\r\n", Headers/bits, "\r\n">>;
 
-default_headers(Body) when is_list(Body)->
+default_headers(Body, Headers) when is_list(Body)->
     Size = integer_to_binary(length(Body)),
-    <<"Connection: Keep-Alive\r\n","Content-Length:",Size/bits,"\r\n\r\n">>.
+    <<"Connection: Keep-Alive\r\n", "Content-Length:",
+      Size/bits, "\r\n", Headers/bits, "\r\n">>.

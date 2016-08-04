@@ -32,6 +32,26 @@ parse_request_test_()->
                      request_line := #{http_method := post,http_uri := <<"/index">>,http_version := 'HTTP/1.0'}}, marley_http:parse_request(<<"POST /index HTTP/1.0\r\n\r\n\r\n">>))
     ].
 
+http_response_test_()->
+    [
+     fun() ->
+             Status = marley_http:status(200),
+             Body = <<>>,
+             Size = integer_to_binary(byte_size(Body)),
+             Result = <<"HTTP/1.1 ",Status/bits,"\r\n","Connection: Keep-Alive\r\n","Content-Length:",Size/bits,"\r\n\r\n" >>,
+             ?assertMatch(Result, marley_http:http_response('HTTP/1.1',200,<<>>,<<>>))
+     end,
+     fun() ->
+             Status = marley_http:status(200),
+             Body = <<"Hello World">>,
+             Size = integer_to_binary(byte_size(Body)),
+             Result = <<"HTTP/1.1 ",Status/bits,"\r\n","Connection: Keep-Alive\r\n","Content-Length:",Size/bits,"\r\n","Cache-control: no-cache\r\n\r\n",Body/bits>>,
+             io:format("Result: ~p ~n", [Result]),
+             ?assertMatch(Result, marley_http:http_response('HTTP/1.1',200,<<"Hello World">>,<<"Cache-control: no-cache\r\n">>))
+     end,
+     ?_assertError(_, marley_http:http_response("HTTP/1.1", 200, <<>>, <<>>))
+    ].
+
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
