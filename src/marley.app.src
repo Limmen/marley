@@ -2,14 +2,16 @@
  [{description, "A basic web server"},
   {vsn, "0.0.1"},
   {registered, []},
+  {mod, {marley_app, []}},
   {applications,
    [kernel,
-    stdlib
+    stdlib,
+    lager
    ]},
   {env,[]},
   {modules, []},
 
-  {maintainers, []},
-  {licenses, []},
-  {links, []}
+  {maintainers, ["Kim Hammar"]},
+  {licenses, ["New BSD License"]},
+  {links, [{"Github", "https://github.com/Limmen/marley"}]}
  ]}.

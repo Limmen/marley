@@ -33,6 +33,7 @@
 %% @end
 %%--------------------------------------------------------------------
 start_link(Opts) ->
+    lager:info("marley_server starting..."),
     gen_server:start_link({local, ?SERVER}, ?MODULE, Opts, []).
 
 %%%===================================================================
@@ -44,7 +45,6 @@ start_link(Opts) ->
 %% @doc
 %% Initializes the server.
 %% Starts acceptor processes and returns the intial state of the server.
-%% @todo Implement this function
 %%
 %% @spec init(Args) -> {ok, State} |
 %%                     {ok, State, Timeout} |
@@ -53,14 +53,19 @@ start_link(Opts) ->
 %% @end
 %%--------------------------------------------------------------------
 init([Port, AcceptorPoolSize, MaxConnections, Routes]) ->
-    %% Use the exit signal from the acceptor processes to know when
-    %% they exit
+    lager:info("Initializing marley_server to listen on port: ~p", [Port]),
+    lager:info("with ~p listeners", [AcceptorPoolSize]),
     process_flag(trap_exit, true),
-    Socket = gen_tcp:listen(Port, [binary, {active, false}, {reuseaddr, true}]),
+    {ok, Socket} =
+        gen_tcp:listen(Port,
+                       [binary, {active, false}, {reuseaddr, true}]),
     Acceptors = ets:new(acceptors, [private, set]),
     StartAcceptor  = fun() ->
-                             Pid = marley_acceptor:start_link(Socket, Routes,
-                                                              self()),
+                             Pid =
+                                 spawn_link(fun() ->
+                                                    marley_acceptor:start(
+                                                      Socket, Routes,
+                                                      ?SERVER) end),
                              ets:insert(Acceptors, {Pid})
                      end,
     [ StartAcceptor() || _ <- lists:seq(1, AcceptorPoolSize)],
@@ -84,10 +89,8 @@ init([Port, AcceptorPoolSize, MaxConnections, Routes]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call(_Request, _From, State) ->
-    Reply = ok,
-    {reply, Reply, State}.
-
+handle_call(stop, _From, State) ->
+    {stop, normal, ok, State}.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -98,6 +101,11 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_cast(client_connected, State) ->
+    lager:debug("Client connected, open connections ~p",
+                [State#state.open_connections, State#state.acceptors]),
+    {noreply, client_connected(State)};
+
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -111,8 +119,16 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(_Info, State) ->
-    {noreply, State}.
+
+handle_info({'EXIT', Pid, normal}, State) ->
+    lager:debug("Client connection: ~p closed.", [Pid]),
+    {noreply, acceptor_died(State, Pid)};
+
+handle_info({'EXIT', Pid, Reason}, State) ->
+    lager:error("Client connection (pid ~p) unexpectedly "
+                "crashed:~n~p~n", [Pid, Reason]),
+    {noreply, acceptor_died(State, Pid)}.
+
 
 %%--------------------------------------------------------------------
 %% @private
@@ -125,7 +141,8 @@ handle_info(_Info, State) ->
 %% @spec terminate(Reason, State) -> void()
 %% @end
 %%--------------------------------------------------------------------
-terminate(_Reason, _State) ->
+terminate(Reason, State) ->
+    lager:info("Marley terminating, reason: ~p, state: ~p", [Reason, State]),
     ok.
 
 %%--------------------------------------------------------------------
@@ -142,3 +159,15 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+client_connected(State)->
+    Pid = spawn_link(fun() ->
+                             marley_acceptor:start(
+                               State#state.socket,
+                               State#state.routes, ?SERVER) end),
+    ets:insert(State#state.acceptors, {Pid}),
+    State#state{open_connections = State#state.open_connections + 1}.
+
+acceptor_died(State, Pid)->
+    ets:delete(State#state.acceptors, Pid),
+    State#state{open_connections = State#state.open_connections - 1}.

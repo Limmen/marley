@@ -38,9 +38,24 @@ start_http(Port, Routes)->
 -spec start_http(integer(), integer(), integer(),
                  marley_router:marley_routes()) -> tuple().
 start_http(Port, AcceptorPoolSize, MaxConnections,  Routes) ->
-    marley_server:start_link([Port, AcceptorPoolSize, MaxConnections, Routes]),
+    lager:info("Starting the Marley webserver and neccessary depedencies"),
+    start(),
+    supervisor:start_child(marley_sup,
+                           [[Port, AcceptorPoolSize, MaxConnections, Routes]]),
     {ok, started}.
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Auxilliary function that starts necessary applications
+%% @spec start() -> {ok, started}
+%% @end
+%%--------------------------------------------------------------------
+start()->
+    lager:start(),
+    application:start(marley),
+    {ok, started}.

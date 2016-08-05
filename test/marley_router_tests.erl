@@ -45,9 +45,9 @@ route_test_()->
                                                               http_uri => <<"/index">>,
                                                               http_version => <<"HTTP/1.0">>}},
                                 Routes = #{router => client_router, static => "priv"},
-                                meck:expect(client_router, get, fun(<<"/index">>,<<>>) ->
-                                                                        {200,<<"Hello World">>, []} end),
-                                ?assertMatch({200, <<"Hello World">>,[]}, marley_router:route(Request, Routes))
+                                meck:expect(client_router, get, fun(<<"/index">>,_,_) ->
+                                                                        {200,<<"Hello World">>, <<>>} end),
+                                ?assertMatch({200, <<"Hello World">>,<<>>}, marley_router:route(Request, Routes))
                         end,
                         fun() ->
                                 Request = #{body => <<>>, headers => [], 
@@ -55,9 +55,9 @@ route_test_()->
                                                               http_uri => <<"/index">>,
                                                               http_version => <<"HTTP/1.0">>}},
                                 Routes = #{router => client_router, static => "priv"},
-                                meck:expect(client_router, get, fun(<<"/weird_route">>,<<>>) ->
-                                                                        {200,<<"Hello World">>,[]} end),
-                                ?assertMatch({404,<<"/index not found">>,[]}, marley_router:route(Request, Routes))
+                                meck:expect(client_router, get, fun(<<"/weird_route">>,_,_) ->
+                                                                        {200,<<"Hello World">>,<<>>} end),
+                                ?assertMatch({404,<<"/index not found">>,<<>>}, marley_router:route(Request, Routes))
                         end,
                         fun() ->
                                 Request = #{body => <<>>, headers => [], 
@@ -65,7 +65,7 @@ route_test_()->
                                                               http_uri => <<"/index">>,
                                                               http_version => <<"HTTP/1.0">>}},
                                 Routes = #{router => client_router, static => "priv"},
-                                ?assertMatch({404,<<"/index not found">>,[]}, marley_router:route(Request, Routes))
+                                ?assertMatch({404,<<"/index not found">>,<<>>}, marley_router:route(Request, Routes))
                         end,
                         fun() ->
                                 Request = #{body => <<>>, headers => [], 
@@ -73,7 +73,7 @@ route_test_()->
                                                               http_uri => <<"/index">>,
                                                               http_version => <<"HTTP/1.0">>}},
                                 Routes = #{static => "priv"},
-                                ?assertMatch({404,<<"/index not found">>,[]}, marley_router:route(Request, Routes))
+                                ?assertMatch({404,<<"/index not found">>,<<>>}, marley_router:route(Request, Routes))
                         end,
                         fun() ->
                                 Request = #{body => <<>>, headers => [], 
@@ -81,9 +81,9 @@ route_test_()->
                                                               http_uri => <<"/index">>,
                                                               http_version => <<"HTTP/1.0">>}},
                                 Routes = #{router => client_router, static => "priv"},
-                                meck:expect(client_router, get, fun(<<"/weird_route">>,<<>>) ->
-                                                                        {200,<<"Hello World">>,[]} end),
-                                ?assertMatch({400,<<>>,[]}, marley_router:route(Request, Routes))
+                                meck:expect(client_router, get, fun(<<"/weird_route">>,_, _) ->
+                                                                        {200,<<"Hello World">>,<<>>} end),
+                                ?assertMatch({400,<<>>,<<>>}, marley_router:route(Request, Routes))
                         end,
                         fun() ->
                                 Request = #{body => <<>>, headers => [], 
@@ -92,9 +92,9 @@ route_test_()->
                                                               http_version => <<"HTTP/1.0">>}},
                                 Routes = #{router => client_router, static => "priv"},
                                 CreatedResource = #{<<"name">> => <<"marley">>, <<"duty">> => <<"serve the web">>},
-                                meck:expect(client_router, post, fun(<<"/index">>,<<>>) ->
-                                                                         {201, CreatedResource, []} end),
-                                ?assertMatch({201,CreatedResource,[]}, marley_router:route(Request, Routes))
+                                meck:expect(client_router, post, fun(<<"/index">>,_,_) ->
+                                                                         {201, CreatedResource, <<>>} end),
+                                ?assertMatch({201,CreatedResource,<<>>}, marley_router:route(Request, Routes))
                         end,
                         fun() ->
                                 Request = #{body => <<>>, headers => [], 
@@ -102,9 +102,9 @@ route_test_()->
                                                               http_uri => <<"/index">>,
                                                               http_version => <<"HTTP/1.0">>}},
                                 Routes = #{router => client_router, static => "priv"},
-                                meck:expect(client_router, not_found, fun(<<"/index">>,<<>>) ->
-                                                                              {404, <<"Custom not found function">>, []} end),
-                                ?assertMatch({404, <<"Custom not found function">>, []}, marley_router:route(Request, Routes))
+                                meck:expect(client_router, not_found, fun(<<"/index">>,_,_) ->
+                                                                              {404, <<"Custom not found function">>, <<>>} end),
+                                ?assertMatch({404, <<"Custom not found function">>, <<>>}, marley_router:route(Request, Routes))
                         end,
                         fun() ->
                                 meck:new(file, [passthrough, unstick]),
@@ -115,7 +115,7 @@ route_test_()->
                                 Routes = #{static => "priv"},
                                 meck:expect(file, read_file, fun(_) ->
                                                                      {ok, <<"Static File Mock">>} end),
-                                ?assertMatch({200, <<"Static File Mock">>, []}, marley_router:route(Request, Routes)),
+                                ?assertMatch({200, <<"Static File Mock">>, <<>>}, marley_router:route(Request, Routes)),
                                 meck:unload(file)
                         end,
                         fun() ->
@@ -127,9 +127,9 @@ route_test_()->
                                 Routes = #{router => client_router, static => "priv"},
                                 meck:expect(file, read_file, fun(_) ->
                                                                      {ok, <<"Static File Mock">>} end),
-                                meck:expect(client_router, get, fun(<<"/wrong_route">>,<<>>) ->
-                                                                        {200,<<"Hello World">>, []} end),
-                                ?assertMatch({200,<<"Static File Mock">>, []}, marley_router:route(Request, Routes)),
+                                meck:expect(client_router, get, fun(<<"/wrong_route">>,_,_) ->
+                                                                        {200,<<"Hello World">>, <<>>} end),
+                                ?assertMatch({200,<<"Static File Mock">>, <<>>}, marley_router:route(Request, Routes)),
                                 meck:unload(file)
                         end
                        ]}}.

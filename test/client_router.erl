@@ -1,33 +1,33 @@
 -module(client_router).
 
--export([get/2, post/2, head/2, put/2, delete/2, trace/2, options/2, connect/2, patch/2, not_found/2]).
+-export([get/3, post/3, head/3, put/3, delete/3, trace/3, options/3, connect/3, patch/3, not_found/3]).
 
-get(_,_)->
+get(_,_,_)->
     ok.
 
-post(_,_)->
+post(_,_,_)->
     ok.
 
-head(_,_)->
+head(_,_,_)->
     ok.
 
-put(_,_)->
+put(_,_,_)->
     ok.
 
-delete(_,_)->
+delete(_,_,_)->
     ok.
 
-trace(_,_)->
+trace(_,_,_)->
     ok.
 
-options(_,_)->
+options(_,_,_)->
     ok.
 
-connect(_,_)->
+connect(_,_,_)->
     ok.
 
-patch(_,_)->
+patch(_,_,_)->
     ok.
 
-not_found(_,_)->
+not_found(_,_,_)->
     ok.

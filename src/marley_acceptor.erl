@@ -9,7 +9,7 @@
 -module(marley_acceptor).
 
 %% API
--export([start_link/3]).
+-export([start/3]).
 
 %%%===================================================================
 %%% API
@@ -21,7 +21,7 @@
 %% @todo Implement this function
 %% @end
 %%--------------------------------------------------------------------
-start_link(Socket, Routes, Server)->
+start(Socket, Routes, Server)->
     accept(Socket, Routes, Server).
 
 %%%===================================================================
@@ -43,8 +43,8 @@ accept(Socket, Routes, Server)->
         {ok, Client} ->
             gen_server:cast(Server, client_connected),
             keepalive_loop(Client, Routes);
-        {error, _Reason}-> %% Expected error
-            ok
+        {error, Reason}->
+            exit({error, Reason})
     end.
 
 
@@ -75,7 +75,7 @@ handle_request(Client, Routes)->
             Request = parse_request(Data),
             handle_response(Client, Request, Routes),
             keepalive_or_close(Request);
-        {error, _Error} -> %% Expected error
+        {error, _Reason} -> %% Expected error
             gen_tcp:close(Client),
             close
     end.
@@ -87,10 +87,15 @@ handle_request(Client, Routes)->
 %% @end
 %%--------------------------------------------------------------------
 keepalive_or_close(Request)->
-    case string:to_lower(lists:keyfind("Connection", 1,
-                                       maps:get(headers, Request))) of
-        "close" ->
-            close;
+    case lists:keyfind("Connection", 1,
+                       maps:get(headers, Request)) of
+        {"Connection", Value} ->
+            case string:to_lower(Value) of
+                "close" ->
+                    close;
+                _ ->
+                    keep_alive
+            end;
         _ ->
             keep_alive
     end.

@@ -33,14 +33,15 @@
 route(Request, Routes)->
     URI = maps:get(http_uri, maps:get(request_line, Request)),
     Method = maps:get(http_method, maps:get(request_line, Request)),
+    Headers = maps:get(headers, Request),
     Body = maps:get(body, Request),
     Static = maps:get(static, Routes),
     case maps:is_key(router, Routes) of
         true ->
             Router = maps:get(router, Routes),
-            case router_route(Router, Method, URI, Body) of
+            case router_route(Router, Method, URI, Body, Headers) of
                 no_match ->
-                    no_match(Method, Static, URI, Router, Body);
+                    no_match(Method, Static, URI, Router, Body, Headers);
                 Response ->
                     Response
             end;
@@ -64,8 +65,8 @@ validate_routes(Routes) ->
 %%% Internal functions
 %%%===================================================================
 
-router_route(Router, Method, URI, Body) ->
-    try apply(Router, Method, [URI, Body]) of
+router_route(Router, Method, URI, Body, Headers) ->
+    try apply(Router, Method, [URI, Headers, Body]) of
         Result ->
             Result
     catch
@@ -73,10 +74,10 @@ router_route(Router, Method, URI, Body) ->
             no_match
     end.
 
-no_match(Method, Static, URI, Router, Body)->
+no_match(Method, Static, URI, Router, Body, Headers)->
     case Method of
         get ->
-            static_route(Static, URI, Router, Body);
+            static_route(Static, URI, Router, Body, Headers);
         _ ->
             bad_request()
     end.
@@ -95,22 +96,22 @@ static_route(Static, URI)->
         {error, _} ->
             not_found(URI);
         {ok, Bin} ->
-            {200, Bin, []}
+            {200, Bin, <<>>}
     end.
 
-static_route(Static, URI, Router, Body)->
+static_route(Static, URI, Router, Body, Headers)->
     case file:read_file(Static ++ "/" ++ URI) of
         {error, _} ->
-            not_found(Router, URI, Body);
+            not_found(Router, URI, Body, Headers);
         {ok, Bin} ->
-            {200, Bin, []}
+            {200, Bin, <<>>}
     end.
 
 not_found(URI)->
-    {404, <<URI/bits, " not found">>, []}.
+    {404, <<URI/bits, " not found">>, <<>>}.
 
-not_found(Router, URI, Body)->
-    try apply(Router, not_found, [URI, Body]) of
+not_found(Router, URI, Body, Headers)->
+    try apply(Router, not_found, [URI, Body, Headers]) of
         Response ->
             Response
     catch
@@ -119,4 +120,4 @@ not_found(Router, URI, Body)->
     end.
 
 bad_request()->
-    {400, <<>>, []}.
+    {400, <<>>, <<>>}.

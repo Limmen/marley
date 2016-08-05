@@ -26,6 +26,9 @@ $ ./rebar3 edoc
 # Start shell with application loaded
 $ ./rebar3 shell
 
+# Start shell with configuration
+$ rebar3 shell --config config_marley.config
+
 # Start shell with application loaded and listen for code changes
 $ ./rebar3 auto
 
