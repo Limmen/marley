@@ -2,7 +2,7 @@
 %%% @author Kim Hammar <kimham@kth.se>
 %%% @copyright (C) 2016, Kim Hammar
 %%% @doc
-%%%
+%%% Top level supervisor for the marley application.
 %%% @end
 %%% Created :  4 Aug 2016 by Kim Hammar <kimham@kth.se>
 %%%-------------------------------------------------------------------
@@ -39,14 +39,12 @@ start_link() ->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% Whenever a supervisor is started using supervisor:start_link/[2,3],
-%% this function is called by the new process to find out about
-%% restart strategy, maximum restart intensity, and child
-%% specifications.
+%% This function is called by the supervisor process to initialize the
+%% supervisor with Supervisor-flags and child specifications.
+%% The supervisor is of type simple_one_for_one and starts children
+%% dynamically, not static.
 %%
-%% @spec init(Args) -> {ok, {SupFlags, [ChildSpec]}} |
-%%                     ignore |
-%%                     {error, Reason}
+%% @spec init(Args) -> {ok, {SupFlags, [ChildSpec]}}
 %% @end
 %%--------------------------------------------------------------------
 init(_Args) ->

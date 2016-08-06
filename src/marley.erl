@@ -20,6 +20,7 @@
 %% @doc
 %% Function that should startup the marley web server with given
 %% configurations.
+%%
 %% @spec start_http(Port, Routes) -> {ok, started}
 %% @end
 %%--------------------------------------------------------------------
@@ -31,6 +32,7 @@ start_http(Port, Routes)->
 %% @doc
 %% Function that should startup the marley web server with given
 %% configurations.
+%%
 %% @spec start_http(Port, AcceptorPoolSize, MaxConnections, Routes) ->
 %%           {ok, started}
 %% @end
@@ -52,9 +54,11 @@ start_http(Port, AcceptorPoolSize, MaxConnections,  Routes) ->
 %% @private
 %% @doc
 %% Auxilliary function that starts necessary applications
+%%
 %% @spec start() -> {ok, started}
 %% @end
 %%--------------------------------------------------------------------
+-spec start()-> {atom(), atom()}.
 start()->
     lager:start(),
     application:start(marley),

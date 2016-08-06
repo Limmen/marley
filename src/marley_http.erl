@@ -10,7 +10,7 @@
 
 %% API
 -export([parse_request/1, http_response/4, status/1]).
--export_type([parsed_http_method/0, parsed_http_version/0]).
+-export_type([parsed_http_method/0, parsed_http_version/0, parsed_http_request/0]).
 
 %% Types
 -type parsed_http_request():: #{
@@ -48,6 +48,7 @@
 %%--------------------------------------------------------------------
 %% @doc
 %% Parses a HTTP request in text-form into a parsed_http_request()
+%%
 %% @spec parse_request(Req) -> ParsedRequest
 %% @end
 %%--------------------------------------------------------------------
@@ -59,10 +60,12 @@ parse_request(Req)->
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Parses a HTTP request in text-form into a parsed_http_request()
-%% @spec parse_request(Req) -> ParsedRequest
+%% Constructs a HTTP response given a set of parameters.
+%%
+%% @spec http_response(Version, Code, Body, UserHeaders) -> HTTPResponse
 %% @end
 %%--------------------------------------------------------------------
+-spec http_response(parsed_http_version(), integer(), binary(), binary()) -> binary().
 http_response(Version, Code, Body, UserHeaders)->
     BinVer = atom_to_binary(Version, unicode),
     Status = status(Code),
@@ -77,13 +80,10 @@ http_response(Version, Code, Body, UserHeaders)->
 %%%===================================================================
 
 %%--------------------------------------------------------------------
-%% Functions to parse a HTTP request
-%%--------------------------------------------------------------------
-
-%%--------------------------------------------------------------------
 %% @private
 %% @doc
 %% Parses the HTTP Request Line
+%%
 %% @spec parse_request_line(Req) -> {ParsedRequestLine, RestOfRequest}
 %% @end
 %%--------------------------------------------------------------------
@@ -99,6 +99,7 @@ parse_request_line(Req) ->
 %% @private
 %% @doc
 %% Parses HTTP URI
+%%
 %% @spec parse_uri(Req) -> {ParsedURI, RestOfRequest}
 %% @end
 %%--------------------------------------------------------------------
@@ -116,6 +117,7 @@ parse_uri(<<X, R1/bits>>, SoFar)->
 %% @private
 %% @doc
 %% Parses HTTP Method
+%%
 %% @spec parse_method(Req) -> {ParsedMethod, RestOfRequest}
 %% @end
 %%--------------------------------------------------------------------
@@ -134,6 +136,7 @@ parse_method(<<X, R0/bits>>, SoFar)->
 %% @private
 %% @doc
 %% Parses HTTP Version
+%%
 %% @spec parse_version(Req) -> {ParsedVersion, RestOfRequest}
 %% @end
 %%--------------------------------------------------------------------
@@ -148,6 +151,7 @@ parse_version(<<$H, $T, $T, $P, $/, $1, $., $0, R0/bits>>) ->
 %% @private
 %% @doc
 %% Parses HTTP Headers
+%%
 %% @spec parse_headers(Req) -> {Parsedheaders, RestOfRequest}
 %% @end
 %%--------------------------------------------------------------------
@@ -164,15 +168,6 @@ parse_headers([H|T], SoFar)->
     [Prop|Val] = string:tokens(H, ":"),
     parse_headers(T, [{Prop, Val}|SoFar]).
 
-%%--------------------------------------------------------------------
-%%
-%% Functions to construct a HTTP Response
-%%
-%%--------------------------------------------------------------------
-
-
-
-
 %%%===================================================================
 %%% Helper functions
 %%%===================================================================
@@ -181,6 +176,7 @@ parse_headers([H|T], SoFar)->
 %% @private
 %% @doc
 %% Extracts the headers part from the request
+%%
 %% @spec get_headers(Req, SoFar) -> {Headers, RestOfRequest}
 %% @end
 %%--------------------------------------------------------------------
@@ -195,9 +191,11 @@ get_headers(<<H, T/bits>>, SoFar)->
 %% @private
 %% @doc
 %% Removes leading CRLF from request
+%%
 %% @spec remove_leading_crlf(Req) -> ReqWithoutLeadingCRLF
 %% @end
 %%--------------------------------------------------------------------
+-spec remove_leading_crlf(binary()) -> binary().
 remove_leading_crlf(<<$\r, $\n, T/bits>>)->
     remove_leading_crlf(T);
 remove_leading_crlf(Req) ->
@@ -207,11 +205,33 @@ remove_leading_crlf(Req) ->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
+%% Adds default response headers: Connection and Content-Length to
+%% user defined headers.
+%%
+%% @spec default_headers(Body, UserHeaders) -> Headers
+%% @end
+%%--------------------------------------------------------------------
+-spec default_headers(binary(), binary() | list()) -> binary().
+default_headers(Body, Headers) when is_binary(Body)->
+    Size = integer_to_binary(byte_size(Body)),
+    <<"Connection: Keep-Alive\r\n", "Content-Length:",
+      Size/bits, "\r\n", Headers/bits, "\r\n">>;
+
+default_headers(Body, Headers) when is_list(Body)->
+    Size = integer_to_binary(length(Body)),
+    <<"Connection: Keep-Alive\r\n", "Content-Length:",
+      Size/bits, "\r\n", Headers/bits, "\r\n">>.
+
+
+%%--------------------------------------------------------------------
+%% @doc
 %% HTTP status codes.
 %% Response code string. Lifted from cowboy_http_req.erl
+%%
 %% @spec status(Code) -> StatusString
 %% @end
 %%--------------------------------------------------------------------
+-spec status(integer()) -> binary().
 status(100) -> <<"100 Continue">>;
 status(101) -> <<"101 Switching Protocols">>;
 status(102) -> <<"102 Processing">>;
@@ -268,15 +288,5 @@ status(505) -> <<"505 HTTP Version Not Supported">>;
 status(506) -> <<"506 Variant Also Negotiates">>;
 status(507) -> <<"507 Insufficient Storage">>;
 status(510) -> <<"510 Not Extended">>;
-status(511) -> <<"511 Network Authentication Required">>;
-status(B) -> B.
+status(511) -> <<"511 Network Authentication Required">>.
 
-default_headers(Body, Headers) when is_binary(Body)->
-    Size = integer_to_binary(byte_size(Body)),
-    <<"Connection: Keep-Alive\r\n", "Content-Length:",
-      Size/bits, "\r\n", Headers/bits, "\r\n">>;
-
-default_headers(Body, Headers) when is_list(Body)->
-    Size = integer_to_binary(length(Body)),
-    <<"Connection: Keep-Alive\r\n", "Content-Length:",
-      Size/bits, "\r\n", Headers/bits, "\r\n">>.

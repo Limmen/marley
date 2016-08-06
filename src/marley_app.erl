@@ -2,7 +2,7 @@
 %%% @author Kim Hammar <kimham@kth.se>
 %%% @copyright (C) 2016, Kim Hammar
 %%% @doc
-%%%
+%%% Application entry point.
 %%% @end
 %%% Created :  4 Aug 2016 by Kim Hammar <kimham@kth.se>
 %%%-------------------------------------------------------------------
@@ -20,11 +20,9 @@
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% This function is called whenever an application is started using
-%% application:start/[1,2], and should start the processes of the
-%% application. If the application is structured according to the OTP
-%% design principles as a supervision tree, this means starting the
-%% top supervisor of the tree.
+%% Startup function, called when hte use starts the application with:
+%% application:start/[1,2].
+%% Starts upp the application top supervisor.
 %%
 %% @spec start(StartType, StartArgs) -> {ok, Pid} |
 %%                                      {ok, Pid, State} |
@@ -44,14 +42,13 @@ start(_StartType, _StartArgs) ->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% This function is called whenever an application has stopped. It
-%% is intended to be the opposite of Module:start/2 and should do
-%% any necessary cleaning up. The return value is ignored.
+%% Cleanup function called when the application is stopped.
 %%
 %% @spec stop(State) -> void()
 %% @end
 %%--------------------------------------------------------------------
 stop(_State) ->
+    lager:info("Application marley stopping"),
     ok.
 
 %%%===================================================================

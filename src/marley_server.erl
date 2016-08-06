@@ -46,10 +46,7 @@ start_link(Opts) ->
 %% Initializes the server.
 %% Starts acceptor processes and returns the intial state of the server.
 %%
-%% @spec init(Args) -> {ok, State} |
-%%                     {ok, State, Timeout} |
-%%                     ignore |
-%%                     {stop, Reason}
+%% @spec init(Args) -> {ok, State} 
 %% @end
 %%--------------------------------------------------------------------
 init([Port, AcceptorPoolSize, MaxConnections, Routes]) ->
@@ -78,52 +75,52 @@ init([Port, AcceptorPoolSize, MaxConnections, Routes]) ->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% Handling call messages
+%% Initiates a normal shutdown of the server
 %%
 %% @spec handle_call(Request, From, State) ->
-%%                                   {reply, Reply, State} |
-%%                                   {reply, Reply, State, Timeout} |
-%%                                   {noreply, State} |
-%%                                   {noreply, State, Timeout} |
-%%                                   {stop, Reason, Reply, State} |
-%%                                   {stop, Reason, State}
+%%                                   {stop, normal, ok, State}
 %% @end
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
     {stop, normal, ok, State}.
+
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% Handling cast messages
+%% handle client_connected cast. 
+%% Starts a new acceptor process and updates the server state. 
 %%
-%% @spec handle_cast(Msg, State) -> {noreply, State} |
-%%                                  {noreply, State, Timeout} |
-%%                                  {stop, Reason, State}
+%% @spec handle_cast(client_connected, State) -> {noreply, State}
+%%                                  
 %% @end
 %%--------------------------------------------------------------------
 handle_cast(client_connected, State) ->
     lager:debug("Client connected, open connections ~p",
                 [State#state.open_connections, State#state.acceptors]),
-    {noreply, client_connected(State)};
-
-handle_cast(_Msg, State) ->
-    {noreply, State}.
+    {noreply, client_connected(State)}.
 
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% Handling all non call/cast messages
+%% Handle exit-trap from a acceptor process due to a normal shutdown.
+%% Updates the server state.
 %%
-%% @spec handle_info(Info, State) -> {noreply, State} |
-%%                                   {noreply, State, Timeout} |
-%%                                   {stop, Reason, State}
+%% @spec handle_info(Info, State) -> {noreply, State}
 %% @end
 %%--------------------------------------------------------------------
-
 handle_info({'EXIT', Pid, normal}, State) ->
     lager:debug("Client connection: ~p closed.", [Pid]),
     {noreply, acceptor_died(State, Pid)};
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Handle exit-trap from a acceptor process due to a unexpected shutdown.
+%% Updates the server state.
+%%
+%% @spec handle_info(Info, State) -> {noreply, State}
+%% @end
+%%--------------------------------------------------------------------
 handle_info({'EXIT', Pid, Reason}, State) ->
     lager:error("Client connection (pid ~p) unexpectedly "
                 "crashed:~n~p~n", [Pid, Reason]),
@@ -134,11 +131,9 @@ handle_info({'EXIT', Pid, Reason}, State) ->
 %% @private
 %% @doc
 %% This function is called by a gen_server when it is about to
-%% terminate. It should be the opposite of Module:init/1 and do any
-%% necessary cleaning up. When it returns, the gen_server terminates
-%% with Reason. The return value is ignored.
+%% terminate. Cleanup for stopping the server happens here.
 %%
-%% @spec terminate(Reason, State) -> void()
+%% @spec terminate(Reason, State) -> ok
 %% @end
 %%--------------------------------------------------------------------
 terminate(Reason, State) ->
@@ -160,6 +155,18 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Helper function that contains logic for when a client connects.
+%% Spawns a new acceptor process and inserts the process in the
+%% ETS-table of the state and also updates the count of open connections.
+%% Returns the new state.
+%%
+%% @spec code_change(State) -> NewState}
+%% @end
+%%--------------------------------------------------------------------
+-spec client_connected(tuple()) -> tuple().
 client_connected(State)->
     Pid = spawn_link(fun() ->
                              marley_acceptor:start(
@@ -168,6 +175,18 @@ client_connected(State)->
     ets:insert(State#state.acceptors, {Pid}),
     State#state{open_connections = State#state.open_connections + 1}.
 
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Helper function that contains logic for when a acceptor-process terminates.
+%% Deletes the terminated acceptor-process from the ETS table and updates
+%% the count of open connections.
+%% Returns the new state.
+%%
+%% @spec code_change(State, Pid) -> NewState}
+%% @end
+%%--------------------------------------------------------------------
+-spec acceptor_died(tuple(), pid()) -> tuple().
 acceptor_died(State, Pid)->
     ets:delete(State#state.acceptors, Pid),
     State#state{open_connections = State#state.open_connections - 1}.

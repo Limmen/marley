@@ -2,7 +2,11 @@
 %%% @author Kim Hammar <kimham@kth.se>
 %%% @copyright (C) 2016, Kim Hammar
 %%% @doc
-%%%
+%%% Module for http acceptor-process.
+%%% The process listens on a given listen-socket for incoming connections.
+%%% When a connection is established, the process handles the connection
+%%% and then terminates. Trap-signals of the process exit is sent to
+%%% the gen_server.
 %%% @end
 %%% Created :  1 Aug 2016 by Kim Hammar <kimham@kth.se>
 %%%-------------------------------------------------------------------
@@ -17,10 +21,14 @@
 
 %%--------------------------------------------------------------------
 %% @doc
-%% Entry point of the acceptor process.
-%% @todo Implement this function
+%% Entry point of the acceptor process
+%%
+%% @spec start(Socket, Routes, Server) -> ok |
+%%                                        no_return()
 %% @end
 %%--------------------------------------------------------------------
+-spec start(gen_tcp:socket(), map(), atom()) -> atom() |
+                                                no_return().
 start(Socket, Routes, Server)->
     accept(Socket, Routes, Server).
 
@@ -34,10 +42,13 @@ start(Socket, Routes, Server)->
 %% Listens for incomming connections on a given TCP socket.
 %% When the process accepts a connection it should notify the
 %% server about it so that the sever can spawn a new acceptor process.
-%% gen_server:cast(Server, accepted),
-%% @todo Implement this function
+%%
+%% @spec accept(Socket, Routes, Server) -> ok |
+%%                                         no_return() 
 %% @end
 %%--------------------------------------------------------------------
+-spec accept(gen_tcp:socket(), marley_router:marley_routs(), atom()) -> atom() |
+                                                                        no_return().
 accept(Socket, Routes, Server)->
     case gen_tcp:accept(Socket) of
         {ok, Client} ->
@@ -53,8 +64,11 @@ accept(Socket, Routes, Server)->
 %% @doc
 %% Controls wether the process should keep the client connection
 %% alive or close it.
+%%
+%% @spec keepalive_loop(Client, Routes) -> ok
 %% @end
 %%--------------------------------------------------------------------
+-spec keepalive_loop(gen_tcp:socket(), marley_router:marley_routes()) -> atom().
 keepalive_loop(Client, Routes)->
     case handle_request(Client, Routes) of
         keep_alive ->
@@ -67,8 +81,12 @@ keepalive_loop(Client, Routes)->
 %% @private
 %% @doc
 %% Handles a incoming request on the client connection
+%%
+%% @spec handle_request(Client, Routes) -> keep_alive |
+%%                                         close
 %% @end
 %%--------------------------------------------------------------------
+-spec handle_request(gen_tcp:socket(), marley_router:marley_routes()) -> atom().
 handle_request(Client, Routes)->
     case gen_tcp:recv(Client, 0, 1000) of %%Close socket if it's idle for 1 sec
         {ok, Data} ->
@@ -84,8 +102,12 @@ handle_request(Client, Routes)->
 %% @private
 %% @doc
 %% Checks wether the keep alive header is set in the connection.
+%%
+%% @spec keepalive_or_close(Request) -> close |
+%%                                      keep_alive
 %% @end
 %%--------------------------------------------------------------------
+-spec keepalive_or_close(marley_http:parsed_http_request()) -> atom().
 keepalive_or_close(Request)->
     case lists:keyfind("Connection", 1,
                        maps:get(headers, Request)) of
@@ -105,8 +127,11 @@ keepalive_or_close(Request)->
 %% @doc
 %% Parses the incoming data into a erlang term representing a HTTP
 %% request.
+%%
+%% @spec parse_request(Data) -> ParsedRequest
 %% @end
 %%--------------------------------------------------------------------
+-spec parse_request(binary()) -> map().
 parse_request(Data)->
     marley_http:parse_request(Data).
 
@@ -114,9 +139,15 @@ parse_request(Data)->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% Handles a HTTP response that is to be sent on the client connection
+%% Handles a HTTP response that is to be sent on the client connection.
+%% Constructs the response and pass it along for sending to the client.
+%%
+%% @spec handle_response(Client, Request, Routes) -> ok |
+%%                                                   {error, Reason}
 %% @end
 %%--------------------------------------------------------------------
+-spec handle_response(gen_tcp:socket(), marley_http:parsed_http_request(), marley_router:marley_routes()) -> atom()|
+                                                                                                             {error, atom() | inet:posix()}.
 handle_response(Client, Request, Routes)->
     Version = maps:get(http_version, maps:get(request_line, Request)),
     Response =
@@ -126,10 +157,12 @@ handle_response(Client, Request, Routes)->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% Constructs a http response given a request and other options.
+%% Constructs a http response given a set of parameters.
+%%
+%% @spec construct_response(Version, {Code, Body, Headers}) -> HttpResponse
 %% @end
 %%--------------------------------------------------------------------
-
+-spec construct_response(marley_http:parsed_http_version(), {integer(), binary(), binary()}) -> binary().
 construct_response(Version, {Code, Body, Headers})->
     marley_http:http_response(Version, Code, Body, Headers).
 
@@ -137,7 +170,12 @@ construct_response(Version, {Code, Body, Headers})->
 %% @private
 %% @doc
 %% Sends a HTTP response to the client
+%%
+%% @spec send_response(Client, Response) -> ok |
+%%                                          {error, Reason}
 %% @end
 %%--------------------------------------------------------------------
+-spec send_response(gen_tcp:socket(), binary()) -> atom()|
+                                                   {error, atom() | inet:posix()}.
 send_response(Client, Response)->
     gen_tcp:send(Client, Response).
