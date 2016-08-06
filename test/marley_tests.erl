@@ -24,7 +24,9 @@ marley_test_()->
       ?_test(not_found()),
       ?_test(custom_not_found()),
       ?_test(client_router_get_request()),
-      ?_test(client_router_post_request())
+      ?_test(client_router_post_request()),
+      ?_test(bad_request()),
+      ?_test(static_file())
      ]}.
         
 
@@ -66,16 +68,17 @@ custom_not_found()->
 client_router_get_request()->
     marley:start_http(3004,  #{static => "priv", router => client_router}),
     meck:expect(client_router, get, fun(<<"/index">>, _, _) ->
-                                            {200, <<"INDEX PAGE">>, <<>>} end),
+                                            {200, <<"INDEX PAGE">>, <<"content-type: text/plain">>} end),
     timer:sleep(100),
     {ok, Result} = httpc:request("http://127.0.0.1:3004/index"),
     {{Version,Code,Status},Headers,Body} = Result,
     ?assertMatch("HTTP/1.1", Version),
     ?assertMatch(200, Code),
     ?assertMatch("OK", Status),
-    ?assert(length(Headers) =:= 2),
+    ?assert(length(Headers) =:= 3),
     ?assert((lists:keyfind("connection", 1, Headers) /= false)),
     ?assert((lists:keyfind("content-length", 1, Headers) /= false)),
+    ?assert((lists:keyfind("content-type", 1, Headers) /= false)),
     {"content-length", Val} = lists:keyfind("content-length", 1, Headers),
     ?assert(list_to_integer(Val) =:= length(Body)),
     ?assertMatch("INDEX PAGE", Body),
@@ -98,6 +101,43 @@ client_router_post_request()->
     ?assert(list_to_integer(Val) =:= length(Body)),
     ?assertMatch("HANDLE POST REQUEST", Body),
     application:stop(marley).
+
+bad_request()->
+    marley:start_http(3004,  #{static => "priv"}),
+    timer:sleep(100),
+    {ok, Result} = httpc:request(delete, {"http://127.0.0.1:3004/index", [], [], []}, [], []),
+    {{Version,Code,Status},Headers,Body} = Result,
+    ?assertMatch("HTTP/1.1", Version),
+    ?assertMatch(400, Code),
+    ?assertMatch("Bad Request", Status),
+    ?assert(length(Headers) =:= 2),
+    ?assert((lists:keyfind("connection", 1, Headers) /= false)),
+    ?assert((lists:keyfind("content-length", 1, Headers) /= false)),
+    {"content-length", Val} = lists:keyfind("content-length", 1, Headers),
+    ?assert(list_to_integer(Val) =:= length(Body)),
+    ?assertMatch("", Body),
+    application:stop(marley).
+
+
+static_file()->
+    marley:start_http(3004,  #{static => "priv", router => client_router}),
+    meck:new(file, [passthrough, unstick]),
+    meck:expect(file, read_file, fun(_) ->
+                                         {ok, <<"Static File Mock">>} end),
+    timer:sleep(100),
+    {ok, Result} = httpc:request("http://127.0.0.1:3004/index"),
+    {{Version,Code,Status},Headers,Body} = Result,
+    ?assertMatch("HTTP/1.1", Version),
+    ?assertMatch(200, Code),
+    ?assertMatch("OK", Status),
+    ?assert(length(Headers) =:= 2),
+    ?assert((lists:keyfind("connection", 1, Headers) /= false)),
+    ?assert((lists:keyfind("content-length", 1, Headers) /= false)),
+    {"content-length", Val} = lists:keyfind("content-length", 1, Headers),
+    ?assert(list_to_integer(Val) =:= length(Body)),
+    ?assertMatch("Static File Mock", Body),
+    application:stop(marley).
+
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================

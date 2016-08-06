@@ -55,6 +55,16 @@ route_test_()->
                                                               http_uri => <<"/index">>,
                                                               http_version => <<"HTTP/1.0">>}},
                                 Routes = #{router => client_router, static => "priv"},
+                                meck:expect(client_router, get, fun(<<"/index">>,_,_) ->
+                                                                        {200,<<"Hello World">>, <<"Content-Type: text/plain\r\n">>} end),
+                                ?assertMatch({200, <<"Hello World">>,<<"Content-Type: text/plain\r\n">>}, marley_router:route(Request, Routes))
+                        end,
+                        fun() ->
+                                Request = #{body => <<>>, headers => [], 
+                                            request_line => #{http_method => get, 
+                                                              http_uri => <<"/index">>,
+                                                              http_version => <<"HTTP/1.0">>}},
+                                Routes = #{router => client_router, static => "priv"},
                                 meck:expect(client_router, get, fun(<<"/weird_route">>,_,_) ->
                                                                         {200,<<"Hello World">>,<<>>} end),
                                 ?assertMatch({404,<<"/index not found">>,<<>>}, marley_router:route(Request, Routes))
