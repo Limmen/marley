@@ -46,7 +46,7 @@ start_link(Opts) ->
 %% Initializes the server.
 %% Starts acceptor processes and returns the intial state of the server.
 %%
-%% @spec init(Args) -> {ok, State} 
+%% @spec init(Args) -> {ok, State}
 %% @end
 %%--------------------------------------------------------------------
 init([Port, AcceptorPoolSize, MaxConnections, Routes]) ->
@@ -87,11 +87,11 @@ handle_call(stop, _From, State) ->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% handle client_connected cast. 
-%% Starts a new acceptor process and updates the server state. 
+%% handle client_connected cast.
+%% Starts a new acceptor process and updates the server state.
 %%
 %% @spec handle_cast(client_connected, State) -> {noreply, State}
-%%                                  
+%%
 %% @end
 %%--------------------------------------------------------------------
 handle_cast(client_connected, State) ->

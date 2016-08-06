@@ -44,14 +44,16 @@ start(Socket, Routes, Server)->
 %% server about it so that the sever can spawn a new acceptor process.
 %%
 %% @spec accept(Socket, Routes, Server) -> ok |
-%%                                         no_return() 
+%%                                         no_return()
 %% @end
 %%--------------------------------------------------------------------
--spec accept(gen_tcp:socket(), marley_router:marley_routs(), atom()) -> atom() |
-                                                                        no_return().
+-spec accept(gen_tcp:socket(), marley_router:marley_routs(), atom()) ->
+                    atom() |
+                    no_return().
 accept(Socket, Routes, Server)->
     case gen_tcp:accept(Socket) of
         {ok, Client} ->
+            lager:debug("client connected on acceptor process: ~p",[self()]),
             gen_server:cast(Server, client_connected),
             keepalive_loop(Client, Routes);
         {error, Reason}->
@@ -74,6 +76,8 @@ keepalive_loop(Client, Routes)->
         keep_alive ->
             keepalive_loop(Client, Routes);
         close ->
+            lager:debug("client connection with acceptor process ~p closed",
+                        [self()]),
             ok
     end.
 
@@ -88,12 +92,14 @@ keepalive_loop(Client, Routes)->
 %%--------------------------------------------------------------------
 -spec handle_request(gen_tcp:socket(), marley_router:marley_routes()) -> atom().
 handle_request(Client, Routes)->
-    case gen_tcp:recv(Client, 0, 1000) of %%Close socket if it's idle for 1 sec
+    case gen_tcp:recv(Client, 0, 5000) of %%Close socket if it's idle for 5 sec
         {ok, Data} ->
             Request = parse_request(Data),
             handle_response(Client, Request, Routes),
             keepalive_or_close(Request);
-        {error, _Reason} -> %% Expected error
+        {error, Reason} -> %% Expected error
+            lager:debug("error while listening for data on socket"),
+            lager:debug("reason: ~p acceptor: ~p",[Reason, self()]),
             gen_tcp:close(Client),
             close
     end.
@@ -146,8 +152,10 @@ parse_request(Data)->
 %%                                                   {error, Reason}
 %% @end
 %%--------------------------------------------------------------------
--spec handle_response(gen_tcp:socket(), marley_http:parsed_http_request(), marley_router:marley_routes()) -> atom()|
-                                                                                                             {error, atom() | inet:posix()}.
+-spec handle_response(gen_tcp:socket(), marley_http:parsed_http_request(),
+                      marley_router:marley_routes()) -> atom()|
+                                                        {error, atom()
+                                                         | inet:posix()}.
 handle_response(Client, Request, Routes)->
     Version = maps:get(http_version, maps:get(request_line, Request)),
     Response =
@@ -159,10 +167,12 @@ handle_response(Client, Request, Routes)->
 %% @doc
 %% Constructs a http response given a set of parameters.
 %%
-%% @spec construct_response(Version, {Code, Body, Headers}) -> HttpResponse
+%% @spec construct_response(Version, {Code, Body, Headers}) ->
+%%                                                 HttpResponse
 %% @end
 %%--------------------------------------------------------------------
--spec construct_response(marley_http:parsed_http_version(), {integer(), binary(), binary()}) -> binary().
+-spec construct_response(marley_http:parsed_http_version(),
+                         {integer(), binary(), binary()}) -> binary().
 construct_response(Version, {Code, Body, Headers})->
     marley_http:http_response(Version, Code, Body, Headers).
 
@@ -176,6 +186,7 @@ construct_response(Version, {Code, Body, Headers})->
 %% @end
 %%--------------------------------------------------------------------
 -spec send_response(gen_tcp:socket(), binary()) -> atom()|
-                                                   {error, atom() | inet:posix()}.
+                                                   {error, atom()
+                                                    | inet:posix()}.
 send_response(Client, Response)->
     gen_tcp:send(Client, Response).

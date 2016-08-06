@@ -30,7 +30,6 @@ marley_test_()->
      ]}.
         
 
-
 not_found() ->
     marley:start_http(3004,  #{static => "priv"}),
     timer:sleep(100),
@@ -68,7 +67,7 @@ custom_not_found()->
 client_router_get_request()->
     marley:start_http(3004,  #{static => "priv", router => client_router}),
     meck:expect(client_router, get, fun(<<"/index">>, _, _) ->
-                                            {200, <<"INDEX PAGE">>, <<"content-type: text/plain">>} end),
+                                            {200, <<"INDEX PAGE">>, <<"content-type: text/plain\r\n">>} end),
     timer:sleep(100),
     {ok, Result} = httpc:request("http://127.0.0.1:3004/index"),
     {{Version,Code,Status},Headers,Body} = Result,

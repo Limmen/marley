@@ -10,7 +10,8 @@
 
 %% API
 -export([parse_request/1, http_response/4, status/1]).
--export_type([parsed_http_method/0, parsed_http_version/0, parsed_http_request/0]).
+-export_type([parsed_http_method/0, parsed_http_version/0,
+              parsed_http_request/0]).
 
 %% Types
 -type parsed_http_request():: #{
@@ -65,7 +66,8 @@ parse_request(Req)->
 %% @spec http_response(Version, Code, Body, UserHeaders) -> HTTPResponse
 %% @end
 %%--------------------------------------------------------------------
--spec http_response(parsed_http_version(), integer(), binary(), binary()) -> binary().
+-spec http_response(parsed_http_version(), integer(), binary(),
+                    binary()) -> binary().
 http_response(Version, Code, Body, UserHeaders)->
     BinVer = atom_to_binary(Version, unicode),
     Status = status(Code),

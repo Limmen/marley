@@ -10,7 +10,7 @@
 -module(marley).
 
 %% API
--export([start_http/2, start_http/4]).
+-export([start_http/2, start_http/4, stop/0]).
 
 %%%===================================================================
 %%% API
@@ -45,6 +45,18 @@ start_http(Port, AcceptorPoolSize, MaxConnections,  Routes) ->
     supervisor:start_child(marley_sup,
                            [[Port, AcceptorPoolSize, MaxConnections, Routes]]),
     {ok, started}.
+
+%%--------------------------------------------------------------------
+%% @doc
+%% Stops the application
+%%
+%% @spec stop() ->
+%%           ok
+%% @end
+%%--------------------------------------------------------------------
+-spec stop() -> atom().
+stop()->
+    application:stop(marley).
 
 %%%===================================================================
 %%% Internal functions

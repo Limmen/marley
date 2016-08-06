@@ -30,7 +30,8 @@
 %% @spec route(Request, Routes) -> {Code, Body, Headers}.
 %% @end
 %%--------------------------------------------------------------------
--spec route(marley_http:parsed_http_request(), marley_routes()) -> {integer(), binary(), binary()}.
+-spec route(marley_http:parsed_http_request(), marley_routes()) ->
+                   {integer(), binary(), binary()}.
 route(Request, Routes)->
     URI = maps:get(http_uri, maps:get(request_line, Request)),
     Method = maps:get(http_method, maps:get(request_line, Request)),
@@ -80,12 +81,15 @@ validate_routes(Routes) ->
 %% @doc
 %% Checks  for a matching route in the client's route module .
 %%
-%% @spec router_route(Router, Method, URI, Body, Headers) -> {Code, Body, Headers} 
-%%                                                           | no_match
+%% @spec router_route(Router, Method, URI, Body, Headers) ->
+%%                                                  {Code, Body, Headers}
+%%                                                  | no_match
 %% @end
 %%--------------------------------------------------------------------
--spec router_route(atom(), marley_http:parsed_http_method(), binary(), binary(), binary()) -> {integer(), binary(), binary()}
-                                                                                                  | atom().
+-spec router_route(atom(), marley_http:parsed_http_method(),
+                   binary(), binary(), binary()) ->
+                          {integer(), binary(), binary()}
+                              | atom().
 router_route(Router, Method, URI, Body, Headers) ->
     try apply(Router, Method, [URI, Headers, Body]) of
         Result ->
@@ -98,13 +102,16 @@ router_route(Router, Method, URI, Body, Headers) ->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% If it's a get_request it checks for a matching route in the client's directory of static files,
-%% otherwise calls for bad_request() response.
+%% If it's a get_request it checks for a matching route in the client's
+%% directory of static files, otherwise calls for bad_request() response.
 %%
-%% @spec no_match(Method, Static, URI, Router, Body, Headers) -> {Code, Body, Headers}
+%% @spec no_match(Method, Static, URI, Router, Body, Headers) ->
+%%                                             {Code, Body, Headers}
 %% @end
 %%--------------------------------------------------------------------
--spec no_match(marley_http:parsed_http_method(), atom(), binary(), atom(), binary(), binary()) -> {integer(), binary(), binary()}.
+-spec no_match(marley_http:parsed_http_method(), list(), binary(),
+               atom(), binary(), binary()) ->
+                      {integer(), binary(), binary()}.
 no_match(Method, Static, URI, Router, Body, Headers)->
     case Method of
         get ->
@@ -116,13 +123,14 @@ no_match(Method, Static, URI, Router, Body, Headers)->
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
-%% If it's a get_request it checks for a matching route in the client's directory of static files,
-%% otherwise calls for bad_request() response.
+%% If it's a get_request it checks for a matching route in the client's
+%% directory of static files, otherwise calls for bad_request() response.
 %%
 %% @spec no_match(Method, Static, URI) -> {Code, Body, Headers}
 %% @end
 %%--------------------------------------------------------------------
--spec no_match(marley_http:parsed_http_method(), atom(), binary()) -> {integer(), binary(), binary()}.
+-spec no_match(marley_http:parsed_http_method(), list(), binary()) ->
+                      {integer(), binary(), binary()}.
 no_match(Method, Static, URI)->
     case Method of
         get ->
@@ -136,12 +144,14 @@ no_match(Method, Static, URI)->
 %% @doc
 %% Checks  for a matching route in the client's directory of static files.
 %%
-%% @spec static_route(Static, URI, Router, Body, Headers) -> {Code, Body, Headers}
+%% @spec static_route(Static, URI, Router, Body, Headers) ->
+%%                                          {Code, Body, Headers}
 %% @end
 %%--------------------------------------------------------------------
--spec static_route(atom(), binary(), atom(), binary(), binary()) -> {integer(), binary(), binary()}.
+-spec static_route(list(), binary(), atom(), binary(), binary()) ->
+                          {integer(), binary(), binary()}.
 static_route(Static, URI, Router, Body, Headers)->
-    case file:read_file(Static ++ "/" ++ URI) of
+    case file:read_file(Static ++ "/" ++ binary_to_list(URI)) of
         {error, _} ->
             not_found(Router, URI, Body, Headers);
         {ok, Bin} ->
@@ -156,9 +166,9 @@ static_route(Static, URI, Router, Body, Headers)->
 %% @spec static_route(Static, URI) -> {Code, Body, Headers}
 %% @end
 %%--------------------------------------------------------------------
--spec static_route(atom(), binary()) -> {integer(), binary(), binary()}.
+-spec static_route(list(), binary()) -> {integer(), binary(), binary()}.
 static_route(Static, URI)->
-    case file:read_file(Static ++ "/" ++ URI) of
+    case file:read_file(Static ++ "/" ++ binary_to_list(URI)) of
         {error, _} ->
             not_found(URI);
         {ok, Bin} ->
@@ -174,7 +184,8 @@ static_route(Static, URI)->
 %% @spec not_found(Router, URI, Body, Headers) -> {Code, Body, Headers}
 %% @end
 %%--------------------------------------------------------------------
--spec not_found(atom(), binary(), binary(), binary()) -> {integer(), binary(), binary()}.
+-spec not_found(atom(), binary(), binary(), binary()) ->
+                       {integer(), binary(), binary()}.
 not_found(Router, URI, Body, Headers)->
     try apply(Router, not_found, [URI, Body, Headers]) of
         Response ->
