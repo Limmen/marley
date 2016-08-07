@@ -30,6 +30,7 @@
 -spec start(gen_tcp:socket(), map(), atom()) -> atom() |
                                                 no_return().
 start(Socket, Routes, Server)->
+    lager:info("acceptor process starting"),
     accept(Socket, Routes, Server).
 
 %%%===================================================================
@@ -53,6 +54,7 @@ start(Socket, Routes, Server)->
 accept(Socket, Routes, Server)->
     case gen_tcp:accept(Socket) of
         {ok, Client} ->
+            lager:info("client connected on acceptor process: ~p",[self()]),
             lager:debug("client connected on acceptor process: ~p",[self()]),
             gen_server:cast(Server, client_connected),
             keepalive_loop(Client, Routes);
@@ -76,6 +78,7 @@ keepalive_loop(Client, Routes)->
         keep_alive ->
             keepalive_loop(Client, Routes);
         close ->
+            lager:info("client connection with acceptor process closed"),
             lager:debug("client connection with acceptor process ~p closed",
                         [self()]),
             ok
