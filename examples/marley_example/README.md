@@ -1,9 +1,22 @@
-marley_example
-=====
+# marley_example
 
-An OTP application
+## Description
 
-Build
------
+Hello-world example of using the marley webserver
 
-    $ rebar3 compile
+## Usage
+```bash
+# build
+$ rebar3 compile
+
+# Start shell with application loaded
+$ ./rebar3 shell
+
+# When shell is started, start dependencies:
+$ lager:start().
+$ application:start(marley).
+
+# Start the example:
+$ application:start(marley_example).
+
+```

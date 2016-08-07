@@ -22,8 +22,7 @@
 %% @end
 %%--------------------------------------------------------------------
 get(<<"/index">>,_,_)->
-    io:format("get router ~n"),
-    {200, <<"Response to http get request for /index">>, <<"content-type: text/plain">>}.
+    {200, <<"Response to http get request for /index">>, <<"content-type: text/plain\r\n">>}.
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -31,17 +30,15 @@ get(<<"/index">>,_,_)->
 %% @end
 %%--------------------------------------------------------------------
 post(<<"/resource">>,_,_)->
-    io:format("post router ~n"),
     Resource = <<"resource">>,
-    {201, Resource, <<"content-type:application/json">>}.
+    {201, Resource, <<"content-type:application/json\r\n">>}.
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
 %% @end
 %%--------------------------------------------------------------------
 not_found(Route,_,_)->
-    io:format("notfound router ~n"),
-    {404, <<Route/bits," not found">>, <<"content-type:text/plain">>}.
+    {404, <<Route/bits," not found">>, <<"content-type:text/plain\r\n">>}.
 
 %%%===================================================================
 %%% Internal functions
