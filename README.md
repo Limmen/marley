@@ -37,7 +37,7 @@ get(<<"/index">>,_,_)->
 
 post(<<"/resource">>,_,_)->
     Resource = <<"resource">>,
-    {201, Resource, <<"content-type:application/json\r\n">>}.
+    {201, Resource, <<"content-type:text/plain\r\n">>}.
 ```
 
 There is also a special function that your router can export to handle the case when the requested resource was not found:

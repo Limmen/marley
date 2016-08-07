@@ -31,7 +31,7 @@ get(<<"/index">>,_,_)->
 %%--------------------------------------------------------------------
 post(<<"/resource">>,_,_)->
     Resource = <<"resource">>,
-    {201, Resource, <<"content-type:application/json\r\n">>}.
+    {201, Resource, <<"content-type:text/plain\r\n">>}.
 %%--------------------------------------------------------------------
 %% @doc
 %% @spec
