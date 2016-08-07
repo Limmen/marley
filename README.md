@@ -8,7 +8,7 @@ Very basic http-server in erlang.
 
 ## How to
 
-1. **Start the server as follows**:
+### Start the server as follows:
 
 ```erlang
     Routes = #{static => "priv", router => marley_example_router},
@@ -19,7 +19,7 @@ Very basic http-server in erlang.
 
 Where static is the directory from where to server static files and router is the name of the module of your router, port is the portnumber that the server will listen on.
 
-2. **Create your router or place static files in your static folder**
+### Create your router or place static files in your static folder
 
 Your router should export functions on the following form:
 ```erlang
@@ -46,7 +46,7 @@ There is also a special function that your router can export to handle the case 
 not_found(Route,_,_)->
     {404, <<Route/bits," not found">>, <<"content-type:text/plain\r\n">>}.
 ```
-3. **Next fire up your browser at:**
+### Next open your browser at:
 
 [http://localhost:3000/](http://localhost:3000/)
 

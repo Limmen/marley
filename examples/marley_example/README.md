@@ -20,3 +20,7 @@ $ application:start(marley).
 $ application:start(marley_example).
 
 ```
+
+Open your browser at:
+
+[http://localhost:3000/](http://localhost:3000/)
