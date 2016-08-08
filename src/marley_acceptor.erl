@@ -115,18 +115,36 @@ handle_request(Client, Routes)->
 %%--------------------------------------------------------------------
 -spec keepalive_or_close(marley_http:parsed_http_request()) -> atom().
 keepalive_or_close(Request)->
-    case lists:keyfind("Connection", 1,
-                       maps:get(headers, Request)) of
-        {"Connection", Value} ->
-            case string:to_lower(Value) of
-                "close" ->
-                    close;
-                _ ->
-                    keep_alive
-            end;
-        _ ->
-            keep_alive
-    end.
+    check_connection_header(maps:get(headers, Request)).
+
+%%--------------------------------------------------------------------
+%% @private
+%% @doc
+%% Function for iterating through the headers and looking for thex
+%% connection header.
+%%
+%% @spec check_connection_header(Headers) -> close |
+%%                                           keep_alive
+%% @end
+%%--------------------------------------------------------------------
+-spec check_connection_header(list()) -> atom().
+check_connection_header([{<<"Connection">>, <<"close">>}|_]) ->
+    close;
+
+check_connection_header([{<<"Connection">>, <<"Close">>}|_]) ->
+    close;
+
+check_connection_header([{<<"connection">>, <<"close">>}|_]) ->
+    close;
+
+check_connection_header([{<<"connection">>, <<"Close">>}|_]) ->
+    close;
+
+check_connection_header([_|Rest]) ->
+    check_connection_header(Rest);
+
+check_connection_header([])->
+    keep_alive.
 
 %%--------------------------------------------------------------------
 %% @private
