@@ -21,12 +21,16 @@
 %% @spec get(URI, Body, Headers) -> {Code, Body, Headers}
 %% @end
 %%--------------------------------------------------------------------
+get(<<"/">>,_,_)->
+    {200, <<"Home page">>, <<"content-type: text/plain\r\n">>};
+
 get(<<"/index">>,_,_)->
     {200, <<"Response to http get request for /index">>, <<"content-type: text/plain\r\n">>}.
 
 %%--------------------------------------------------------------------
 %% @doc
-%% @spec
+%% Handles post requests
+%% @spec get(URI, Body, Headers) -> {Code, Body, Headers}
 %% @end
 %%--------------------------------------------------------------------
 post(<<"/resource">>,_,_)->
@@ -34,7 +38,8 @@ post(<<"/resource">>,_,_)->
     {201, Resource, <<"content-type:text/plain\r\n">>}.
 %%--------------------------------------------------------------------
 %% @doc
-%% @spec
+%% Not found route
+%% @spec get(URI, Body, Headers) -> {Code, Body, Headers}
 %% @end
 %%--------------------------------------------------------------------
 not_found(Route,_,_)->

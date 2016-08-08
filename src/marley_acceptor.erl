@@ -47,7 +47,7 @@ start(Socket, Routes, Server)->
 %%                                         no_return()
 %% @end
 %%--------------------------------------------------------------------
--spec accept(gen_tcp:socket(), marley_router:marley_routs(), atom()) ->
+-spec accept(gen_tcp:socket(), marley_router:marley_routes(), atom()) ->
                     atom() |
                     no_return().
 accept(Socket, Routes, Server)->
@@ -115,7 +115,7 @@ handle_request(Client, Routes)->
 %%--------------------------------------------------------------------
 -spec keepalive_or_close(marley_http:parsed_http_request()) -> atom().
 keepalive_or_close(Request)->
-    check_connection_header(maps:get(headers, Request)).
+    check_connection_header([]).
 
 %%--------------------------------------------------------------------
 %% @private

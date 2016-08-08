@@ -8,6 +8,14 @@ Very basic http-server in erlang.
 
 ## How to
 
+### Add marley to your project:
+
+```erlang
+{deps, [
+       {marley, {git, "https://github.com/Limmen/marley"}}
+]}.
+```
+
 ### Start the server as follows:
 
 ```erlang
@@ -32,6 +40,9 @@ Headers should be separated by "\r\n".
 
 For instance:
 ```erlang
+get(<<"/">>,_,_)->
+    {200, <<"Home page">>, <<"content-type: text/plain\r\n">>};
+    
 get(<<"/index">>,_,_)->
     {200, <<"Response to http get request for /index">>, <<"content-type: text/plain\r\n">>}.
 

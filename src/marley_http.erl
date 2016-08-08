@@ -16,7 +16,7 @@
 %% Types
 -type parsed_http_request():: #{
                            request_line => parsed_http_request_line(),
-                           headers => [parsed_http_header()],
+                           headers => list(parsed_http_header()),
                            body => binary()
                           }.
 
