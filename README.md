@@ -6,6 +6,14 @@
 
 Very basic http-server in erlang.
 
+Not recommended for any serious use, this was just developed as a exercise. I recommend to have a look at
+
+[cowboy](https://github.com/ninenines/cowboy)
+
+and
+
+[elli](https://github.com/knutin/elli)
+
 ## How to
 
 ### Add marley to your project:

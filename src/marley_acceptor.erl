@@ -115,7 +115,8 @@ handle_request(Client, Routes)->
 %%--------------------------------------------------------------------
 -spec keepalive_or_close(marley_http:parsed_http_request()) -> atom().
 keepalive_or_close(Request)->
-    check_connection_header([]).
+    io:format("headers: ~p ~n", [maps:get(headers, Request)]),
+    check_connection_header(maps:get(headers, Request)).
 
 %%--------------------------------------------------------------------
 %% @private
